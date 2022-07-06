@@ -1268,7 +1268,9 @@ class Layout_Hocsinh(Screen):
 								pass
 							else:
 								tonghs.append(hs.ten)
-							for cotdiem in mon.dhk1:
+							cotd=mon.dhk1.copy()
+							cotd.reverse()
+							for cotdiem in cotd:
 								if cotdiem.ten in tatcacotdiem or cotdiem.diem==[]:
 									pass
 								else:
@@ -1333,7 +1335,9 @@ class Layout_Hocsinh(Screen):
 					if hs.diemhs != [] and hs.TBTCM(1) != 0 or hs.TBTCM(2) != 0:
 						for mon in hs.diemhs:
 							if mon.ten == sheet.title:
-								for cotdiem in mon.dhk2:
+								cotd=mon.dhk2.copy()
+								cotd.reverse()
+								for cotdiem in cotd:
 									if cotdiem.ten in tatcacotdiem or cotdiem.diem==[]:
 										pass
 									else:
@@ -1376,7 +1380,6 @@ class Layout_Hocsinh(Screen):
 					sheet.merge_cells("B"+str(j)+":B"+str(i-1))
 					sheet.merge_cells("C"+str(j)+":C"+str(i-1))
 					sheet.merge_cells("D"+str(j)+":D"+str(i-1))
-					sheet.merge_cells(getcl(oldcot-1)+str(j)+":"+getcl(oldcot-1)+str(i-1))
 					sheet.merge_cells(getcl(cot)+str(j)+":"+getcl(cot)+str(i-1))
 					j=i
 			else:
@@ -1384,7 +1387,6 @@ class Layout_Hocsinh(Screen):
 				sheet.merge_cells("B"+str(j)+":B"+str(i))
 				sheet.merge_cells("C"+str(j)+":C"+str(i))
 				sheet.merge_cells("D"+str(j)+":D"+str(i))
-				sheet.merge_cells(getcl(oldcot-1)+str(j)+":"+getcl(oldcot-1)+str(i))
 				sheet.merge_cells(getcl(cot)+str(j)+":"+getcl(cot)+str(i))
 			for cott in range(1,cot+1):
 				sheet.column_dimensions[getcl(cot)].width=1
@@ -2001,8 +2003,8 @@ class Myapp(MDApp):
 				size+=i.size[1]
 		size-=args[0].height
 		args[0].parent.height=size+20
-		if args[0].parent.height < 100:
-			args[0].parent.height=100
+		if args[0].parent.height < 300:
+			args[0].parent.height=300
 	def diem_delete(self,widget_col2):
 		widget_col2.parent.parent.remove_widget(widget_col2.parent)
 	def update_rect(self,rect,a):
@@ -2812,33 +2814,38 @@ class layout_lochs(GridLayout):
 		self.min=MDTextField(
 				text="",
 				hint_text="Min",
-				size_hint_x=None,
 				helper_text="",
 				helper_text_mode="persistent",
 				width=60,
+				pos_hint={'top':0,'center_x':.2},
+				size_hint_x=None,
 				halign="center",
 				text_color=(74/256, 173/256, 54/256, 1),
 			)
 		self.min.bind(focus=self.check_error,text=self.check_error)
-		self.add_widget(self.min)
-		self.add_widget(MDLabel(
-				text="-",
-				halign="center",
-				size_hint_x=None,width=70,
-				size_hint_y=None,height=100,
-			))
 		self.max=MDTextField(
 				text="",
 				hint_text="Max",
-				size_hint_x=None,
 				helper_text="",
+				pos_hint={'top':0,'center_x':.8},
+				size_hint_x=None,
 				helper_text_mode="persistent",
 				width=60,
 				halign="center",
 				text_color=(74/256, 173/256, 54/256, 1),
 			)
 		self.max.bind(focus=self.check_error,text=self.check_error)
-		self.add_widget(self.max)
+		tmp=Screen(size_hint=(None,None),width=Window.width*30/100)
+		tmp.add_widget(self.min)
+		tmp.add_widget(MDLabel(
+				text="-",
+				pos_hint={'top':0,'center_x':.5},
+				halign="center",
+				size_hint_x=None,width=70,
+				size_hint_y=None,height=100,
+			))
+		tmp.add_widget(self.max)
+		self.add_widget(tmp)
 		
 		button=MDFillRoundFlatButton(text="Lọc",pos_hint={"center_x":.5,"top":.0})
 		button.bind(on_release=self.loc)
