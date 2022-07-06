@@ -1067,6 +1067,10 @@ class Layout_Hocsinh(Screen):
 		self.datatb.indexx=[]
 		self.datatb.bind(on_check_press=self.app.on_check_press)
 		self.datatb.header.ids.check.parent.remove_widget(self.datatb.header.ids.check)
+		for i in self.datatb.header.children:
+			for j in i.children:
+				if type(j) == kivymd.uix.datatables.CellHeader:
+					j.tooltip_text=""
 		self.datatb.header.ids.first_cell.tooltip_text=""
 		self.datatb.bind(on_row_press=self.app.selec_row)
 		self.add_widget(self.datatb)
@@ -1108,6 +1112,9 @@ class Layout_Hocsinh(Screen):
 		if data.icon=="content-save":
 			self.app.save()
 		if data.icon=="account-minus":
+			if self.datatb.indexx == []:
+				thongbao('Chọn học sinh muốn xóa')
+				return
 			for i in self.datatb.indexx:
 				if i < len(self.datatb.row_data):self.app.xoahocsinh(False,self.datatb.row_data[i][0],self.datatb.row_data[i][1],self.datatb.row_data[i][2],self.datatb.row_data[i][3])
 			self.app.datatables_rows_update()
@@ -1319,8 +1326,12 @@ class Layout_Hocsinh(Screen):
 							if mon.dhk2==[]:
 								tmp=False
 							else:
-								tmp=True
-								break
+								for c in mon.dhk2:
+									if c.diem!=[''] and c.diem!=[]:
+										tmp=True
+										break
+								else:
+									tmp=False
 					if tmp:
 						break
 			oldhang=hang
@@ -1380,6 +1391,8 @@ class Layout_Hocsinh(Screen):
 					sheet.merge_cells("B"+str(j)+":B"+str(i-1))
 					sheet.merge_cells("C"+str(j)+":C"+str(i-1))
 					sheet.merge_cells("D"+str(j)+":D"+str(i-1))
+					if oldcot != cot:
+						sheet.merge_cells(getcl(oldcot-1)+str(j)+":"+getcl(oldcot-1)+str(i-1))
 					sheet.merge_cells(getcl(cot)+str(j)+":"+getcl(cot)+str(i-1))
 					j=i
 			else:
@@ -1387,6 +1400,8 @@ class Layout_Hocsinh(Screen):
 				sheet.merge_cells("B"+str(j)+":B"+str(i))
 				sheet.merge_cells("C"+str(j)+":C"+str(i))
 				sheet.merge_cells("D"+str(j)+":D"+str(i))
+				if oldcot != cot:
+					sheet.merge_cells(getcl(oldcot-1)+str(j)+":"+getcl(oldcot-1)+str(i))
 				sheet.merge_cells(getcl(cot)+str(j)+":"+getcl(cot)+str(i))
 			for cott in range(1,cot+1):
 				sheet.column_dimensions[getcl(cot)].width=1
@@ -2871,6 +2886,11 @@ class layout_lochs(GridLayout):
 		if tf.focus and tf.text!="":
 			try:
 				diem=float(tf.text)
+				if diem < 0:
+					tf.error=True
+					tf.helper_text="Chỉ nhập số nguyên dương"
+					tf._anim_current_line_color(tf.error_color)
+					return
 				tf.error=False
 				tf.helper_text=""
 				tf._anim_current_line_color(tf.theme_cls.disabled_hint_text_color)
