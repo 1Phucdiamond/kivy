@@ -312,12 +312,12 @@ class diemlayout(Screen):
 		#BottomBar####################################################################################################################################################
 		BottomBar=MDBottomAppBar()
 		toolbar=MDToolbar(
-				title="Help",
+				#title="Help",
 				mode="end",
 				icon="content-save",
 			)
 		toolbar.bind(on_action_button=lambda x:self.save(args[0]))
-		toolbar.left_action_items=[["coffee", lambda x: print("Main")]]
+		#toolbar.left_action_items=[["coffee", lambda x: print("Main")]]
 		toolbar.type="bottom"
 		BottomBar.add_widget(toolbar)
 		self.add_widget(BottomBar)
@@ -410,7 +410,7 @@ class diemlayout(Screen):
 									diem=[]
 								if item.ten == "diem":
 									diem.append(item.children[1].text)
-		app.save()
+		thongbao('Đã lưu điểm thành công')
 		###############################################################################################################################
 class layout_thietlapmon(GridLayout):
 	def __init__(self,*args,**kwargn):
