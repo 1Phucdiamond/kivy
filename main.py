@@ -1195,8 +1195,12 @@ class Layout_Hocsinh(Screen):
 					if mon.dhk2==[]:
 						tmp=False
 					else:
-						tmp=True
-						break
+						for c in mon.dhk2:
+							if c.diem!=[''] and c.diem!=[]:
+								tmp=True
+								break
+						else:
+							tmp=False
 				if tmp:
 					break
 		oldhang=hang
