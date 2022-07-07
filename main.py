@@ -354,7 +354,10 @@ class diemlayout(Screen):
 		hs=app.geths(app.data_hocsinh[0],app.data_hocsinh[1],app.data_hocsinh[2],app.data_hocsinh[3])
 		#Hocki1####################################################################################################################
 		for View in self.View.children[1:]:
-			tenmon=View.children[1].children[0].children[0].text[9:]
+			if len(View.children[1].children[0].children)==1:
+				tenmon=View.children[1].children[0].children[0].text[9:]
+			else:
+				tenmon=View.children[1].children[0].children[1].text[9:]
 			diem=[]
 			allmon=[]
 			for mon in hs.diemhs:
@@ -383,7 +386,10 @@ class diemlayout(Screen):
 									diem.append(item.children[1].text)
 		#Hocki2#####################################################################################################################
 		for View in self.View2.children[1:]:
-			tenmon=View.children[1].children[0].children[0].text[9:]
+			if len(View.children[1].children[0].children)==1:
+				tenmon=View.children[1].children[0].children[0].text[9:]
+			else:
+				tenmon=View.children[1].children[0].children[1].text[9:]
 			diem=[]
 			allmon=[]
 			for mon in hs.diemhs:
@@ -585,30 +591,6 @@ class layout_thietlapmon(GridLayout):
 		self.mon_slec.layout_mon1=monhoc
 		View1.add_widget(monhoc)
 		col1.add_widget(View1)
-		for cot in self.mon_slec.dhk1:
-			cotdiem=MDLabel(text=f"Cột Điểm: {cot.ten}",halign="center",theme_text_color="Custom",text_color=(51/256, 153/256, 102/256))#'Primary', 'Secondary', 'Hint', 'Error', 'Custom', 'ContrastParentBackground'
-			cotdiem.ten="cotdiem"
-			cotdiem.cot=cot.ten
-			View2=GridLayout(
-				cols=1,
-				row_default_height= 50,
-				row_force_default=True,
-				size_hint_y=None,
-				height=40
-			)
-			View2.add_widget(cotdiem)
-			col2.add_widget(View2)
-
-			all_diem=GridLayout(cols=1,size_hint_y=None,)
-			col2.add_widget(all_diem)
-			all_diem.bind(children=self.app.resize_alldiem)
-		
-			layout=Screen(size_hint_y=None,size_hint_x=None,height=50*2)
-			add_button=MDIconButton(icon="hospital",pos_hint={'center_x':.5,'center_y':.5})
-			add_button.bind(on_press=self.app.themdiem)
-			layout.add_widget(add_button)
-			layout.ten="adddiem"
-			all_diem.add_widget(layout)
 		col2.bind(children=self.app.resize_diem)
 		self.app.resize_diem(col2,col2.children)
 		for cot in self.mon_slec.dhk2:
@@ -626,7 +608,7 @@ class layout_thietlapmon(GridLayout):
 			)
 		col1=GridLayout(
 			size_hint_x=None,
-			width=160,
+			width=210,
 			cols=1,
 		)
 		View.add_widget(col1)
@@ -643,30 +625,6 @@ class layout_thietlapmon(GridLayout):
 		self.mon_slec.layout_mon2=monhoc
 		View1.add_widget(monhoc)
 		col1.add_widget(View1)
-		for cot in self.mon_slec.dhk2:
-			cotdiem=MDLabel(text=f"Cột Điểm: {cot.ten}",halign="center",theme_text_color="Custom",text_color=(51/256, 153/256, 102/256))#'Primary', 'Secondary', 'Hint', 'Error', 'Custom', 'ContrastParentBackground'
-			cotdiem.ten="cotdiem"
-			cotdiem.cot=cot.ten
-			View2=GridLayout(
-				cols=1,
-				row_default_height= 50,
-				row_force_default=True,
-				size_hint_y=None,
-				height=40
-			)
-			View2.add_widget(cotdiem)
-			col2.add_widget(View2)
-
-			all_diem=GridLayout(cols=1,size_hint_y=None,)
-			col2.add_widget(all_diem)
-			all_diem.bind(children=self.app.resize_alldiem)
-	
-			layout=Screen(size_hint_y=None,size_hint_x=None,height=50*2)
-			add_button=MDIconButton(icon="hospital",pos_hint={'center_x':.5,'center_y':.5})
-			add_button.bind(on_press=self.app.themdiem)
-			layout.add_widget(add_button)
-			layout.ten="adddiem"
-			all_diem.add_widget(layout)
 		col2.bind(children=self.app.resize_diem)
 		self.app.resize_diem(col2,col2.children)
 		with View.canvas.before:
@@ -748,6 +706,8 @@ class layout_thietlapmon(GridLayout):
 		)
 		View2.add_widget(cotdiem)
 		all_diem=GridLayout(cols=1,size_hint_y=None,)
+		all_diem.cot=cd.cot
+		all_diem.ten="alldiem"
 		all_diem.bind(children=self.app.resize_alldiem)
 		cd.cot.delete=[all_diem,View2]
 		layout=Screen(size_hint_y=None,size_hint_x=None,height=50*2)
@@ -762,6 +722,7 @@ class layout_thietlapmon(GridLayout):
 			self.mon_slec.col2hk2.add_widget(View2)
 			self.mon_slec.col2hk2.add_widget(all_diem)
 		all_diem.add_widget(layout)
+		layout.width=View2.parent.width-100
 
 		self.nhap_heso(heso)
 		self.nhap_tencot_tenmon(cd)
@@ -829,6 +790,12 @@ class layout_thietlapmon(GridLayout):
 		self.app.monhoc.remove(self.mon_slec)
 		button=args[0]
 		self.app.thietlapmon_xong.mon_TextField.remove(button.mon)
+		for i in self.thietlap_cotdiem.children:
+			if type(i)==kivymd.uix.textfield.MDTextField:
+				if i.hint_text=="Cột điểm":
+					self.app.thietlapmon_xong.cotdiem_TextField.remove(i)
+				else:
+					self.app.thietlapmon_xong.heso_TextField.remove(i)
 		button.parent.parent.parent.remove_widget(button.parent)
 		if self.list_monhoc.children==[]:
 			self.monhoc_var=""
@@ -1804,10 +1771,12 @@ class Myapp(MDApp):
 		self.save_tab="main"
 		
 		
-		
-		if platform == "android":
-			from android.permissions import request_permissions, Permission
-			request_permissions([Permission.READ_EXTERNAL_STORAGE, Permission.WRITE_EXTERNAL_STORAGE])
+		try:
+			if platform == "android":
+				from android.permissions import request_permissions, Permission
+				request_permissions([Permission.READ_EXTERNAL_STORAGE, Permission.WRITE_EXTERNAL_STORAGE])
+		except:
+			pass
 		return self.tab
 
 
@@ -1963,7 +1932,10 @@ class Myapp(MDApp):
 		self.list=[]
 		mondaco=[]
 		for View in self.tabdiem.View.children[1:]:
-			mondaco.append(View.children[1].children[0].children[0].text[9:])
+			if len(View.children[1].children[0].children)==1:
+				mondaco.append(View.children[1].children[0].children[0].text[9:])
+			else:
+				mondaco.append(View.children[1].children[0].children[1].text[9:])
 		for i in self.monhoc:
 			if i.ten not in mondaco:
 				self.list.append(
@@ -2001,12 +1973,38 @@ class Myapp(MDApp):
 				args[0].helper_text="Kí tự này không phải là điểm"
 			args[0].error=True
 			args[0]._anim_current_line_color(args[0].error_color)
+		self.resize_alldiem(args[0].alldiem)
 	def resize_alldiem(self,*args):
-		size=0
-		for i in args[1]:
-			size+=i.height
-		args[0].parent.parent.height=args[0].parent.parent.height-args[0].height+size
-		args[0].height=size
+		if len(args)>1:
+			size=0
+			for i in args[1]:
+				size+=i.height
+			args[0].parent.parent.height=args[0].parent.parent.height-args[0].height+size
+			args[0].height=size
+
+		alldiem=[]
+		for i in args[0].parent.children:
+			if hasattr(i,"ten"):
+				if i.ten == "alldiem":
+					for j in i.children:
+						if type(j) == kivy.uix.gridlayout.GridLayout:
+							try:
+								alldiem.append([float(j.children[1].text),float(i.cot.heso)])
+							except:
+								pass
+		tongdiem=0
+		tongheso=0
+		for i in alldiem:
+			tongdiem+=i[0]*i[1]
+			tongheso+=i[1]
+		if tongdiem != 0 and tongheso != 0:
+			if len(args[0].parent.parent.children[1].children[0].children)==1:
+				args[0].parent.parent.children[1].children[0].add_widget(MDLabel(text=f"ĐTB-Môn:\n{round(tongdiem/tongheso,1)}",halign="center",theme_text_color="Custom",text_color=(102, 255, 102)))
+			else:
+				args[0].parent.parent.children[1].children[0].children[0].text=f"ĐTB-Môn:\n{round(tongdiem/tongheso,1)}"
+		else:
+			if len(args[0].parent.parent.children[1].children[0].children)==2:
+				args[0].parent.parent.children[1].children[0].remove_widget(args[0].parent.parent.children[1].children[0].children[0])
 	def resize_col2(self,*args):
 		for i in args[0].children:
 			for j in i.children:
@@ -2071,6 +2069,8 @@ class Myapp(MDApp):
 				self.col2.add_widget(self.View2)
 
 				all_diem=GridLayout(cols=1,size_hint_y=None,)
+				all_diem.cot=cot
+				all_diem.ten="alldiem"
 				self.col2.add_widget(all_diem)
 				all_diem.bind(children=self.resize_alldiem)
 			
@@ -2098,7 +2098,7 @@ class Myapp(MDApp):
 				)
 			self.col1=GridLayout(
 				size_hint_x=None,
-				width=160,
+				width=210,
 				cols=1,
 			)
 			self.View.add_widget(self.col1)
@@ -2131,6 +2131,8 @@ class Myapp(MDApp):
 				self.col2.add_widget(self.View2)
 
 				all_diem=GridLayout(cols=1,size_hint_y=None,)
+				all_diem.cot=cot
+				all_diem.ten="alldiem"
 				self.col2.add_widget(all_diem)
 				all_diem.bind(children=self.resize_alldiem)
 		
@@ -2214,19 +2216,25 @@ class Myapp(MDApp):
 		try:
 			args[0].parent.parent.add_widget(View3)
 			args[0].parent.parent.add_widget(layout)
+			diemso.alldiem=args[0].parent.parent
 			args[0].parent.parent.remove_widget(args[0].parent)
 			self.resize_col2(View3.parent.parent)
 		except:
-			diemso.text=args[3]
 			if args[0]==1:hocki=self.tabdiem.View.children[1:]
 			else:hocki=self.tabdiem.View2.children[1:]
 			for View in hocki:
-				if args[1]==View.children[1].children[0].children[0].text[9:]:
+				if len(View.children[1].children[0].children)==1:
+					mon=View.children[1].children[0].children[0].text[9:]
+				else:
+					mon=View.children[1].children[0].children[1].text[9:]
+				if args[1]==mon:
 					for View_children in View.children[0].children:
 						for item in View_children.children:
 							if hasattr(item, 'ten'):
 								if type(item) == kivymd.uix.label.MDLabel:
 									if args[2]==item.cot:
+										diemso.alldiem=button.parent
+										diemso.text=args[3]
 										button.parent.add_widget(View3)
 										button.parent.add_widget(layout)
 										button.parent.remove_widget(button)
