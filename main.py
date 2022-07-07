@@ -1122,7 +1122,9 @@ class Layout_Hocsinh(Screen):
 						ws_active[getcl(cot)+"2"].value=mon.ten
 						cot+=1
 						tatcamonhoc.append(mon.ten)
-		if tatcamonhoc == []:return
+		if tatcamonhoc == []:
+			thongbao('Học sinh đã chọn chưa có kết quả học tập')
+			return
 		ws_active.move_range(getcl(6)+"1:"+getcl(cot+10)+"1",rows=0,cols=cot-5)
 		ws_active.merge_cells(getcl(5)+"1:"+getcl(cot-1)+"1")
 		ws_active.merge_cells("A1:A2")
@@ -1256,7 +1258,7 @@ class Layout_Hocsinh(Screen):
 									cot+=1
 									tatcacotdiem.append(cotdiem.ten)
 			sheet.move_range(getcl(6)+"1:"+getcl(cot+10)+"1",rows=0,cols=cot-5)
-			sheet.merge_cells(getcl(5)+"1:"+getcl(cot-1)+"1")
+			if cot != 5:sheet.merge_cells(getcl(5)+"1:"+getcl(cot-1)+"1")
 			sheet.merge_cells(getcl(cot)+"1:"+getcl(cot)+"2")
 			sheet.merge_cells("A1:A2")
 			sheet.merge_cells("B1:B2")
@@ -2591,9 +2593,12 @@ class getfilepath_Excel(GridLayout):
 		self.parent.remove_widget(app.Popup_on)
 		self.parent.remove_widget(self)
 	def xong_(self,*args):
-		app.screen.xuatdulieu(app.screen._path_+f"/{self.textfield.text}",app.screen.data_xuatfile_excel)
 		self.parent.remove_widget(app.Popup_on)
 		self.parent.remove_widget(self)
+		if self.textfield.text=='':
+			thongbao('Chưa nhập tên file')
+			return
+		app.screen.xuatdulieu(app.screen._path_+f"/{self.textfield.text}",app.screen.data_xuatfile_excel)
 	def resize(self,*args):
 		self.width=Window.width*70/100
 class setnamefile(GridLayout):
