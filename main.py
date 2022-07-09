@@ -1,4 +1,4 @@
-from kivy.garden.matplotlib.backend_kivyagg import FigureCanvasKivyAgg
+from kivymatplotlib.backend_kivyagg import FigureCanvasKivyAgg
 from matplotlib import pyplot as pl
 from openpyxl import Workbook
 from openpyxl import load_workbook
