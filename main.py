@@ -1053,20 +1053,18 @@ class Layout_Chart(Screen):
 	def change_hocki(self,*args):
 		if args[0].text=="Học kì I":
 			args[0].text="Học kì II"
+			self.button=MDFillRoundFlatButton(text="Học kì II" ,pos=self.ketqua.children[0].pos)
 			self.ketqua.clear_widgets()
 			if self.pie_chart(1)!=None:
 				self.ketqua.add_widget(self.pie_chart(2))
-			self.button=MDFillRoundFlatButton(text="Học kì II")
-			self.button.pos=(Window.width-self.button.width,Window.height-150)
 			self.button.bind(on_press=self.change_hocki)
 			self.ketqua.add_widget(self.button)
 		else:
 			args[0].text="Học kì I"
+			self.button=MDFillRoundFlatButton(text="Học kì I" ,pos=self.ketqua.children[0].pos)
 			self.ketqua.clear_widgets()
 			if self.pie_chart(1)!=None:
 				self.ketqua.add_widget(self.pie_chart(1))
-			self.button=MDFillRoundFlatButton(text="Học kì I")
-			self.button.pos=(Window.width-self.button.width,Window.height-150)
 			self.button.bind(on_press=self.change_hocki)
 			self.ketqua.add_widget(self.button)
 	def update_chart(self):
@@ -1074,7 +1072,7 @@ class Layout_Chart(Screen):
 		if self.pie_chart(1)!=None:
 			self.ketqua.add_widget(self.pie_chart(1))
 		self.button=MDFillRoundFlatButton(text="Học kì I")
-		self.button.pos=(Window.width-self.button.width,Window.height-150)
+		self.button.pos=(Window.width-self.button.width*1.85,Window.height-300)
 		self.button.bind(on_press=self.change_hocki)
 		self.ketqua.add_widget(self.button)
 	def pie_chart(self,hocki):
@@ -1122,13 +1120,14 @@ class Layout_Chart(Screen):
 				labels=data1,
 				explode=explode,
 				autopct="%1.3f%%",
-				wedgeprops={"edgecolor":"white","linewidth":1.5}
+				wedgeprops={"edgecolor":"white","linewidth":1.5},
+				textprops={'fontsize': 28}
 			)
-		pl.tight_layout()
+		pl.tight_layout(pad=3)
 		return FigureCanvasKivyAgg(pl.gcf())
 	def resize(self,*args):
 		if hasattr(self,"button"):
-			self.button.pos=(Window.width-self.button.width,Window.height-150)
+			self.button.pos=(self.width-self.button.width,Window.height-300)
 		self.ketqua.width=Window.width
 		self.ketqua.height=Window.height-self.menubar.height
 class Layout_Hocsinh(Screen):
@@ -1167,7 +1166,7 @@ class Layout_Hocsinh(Screen):
 		self.Action_Button=MDFloatingActionButtonSpeedDial(
 				root_button_anim= True,
 				data={
-					"Thống khê":"chart-bar",
+					"Thống kê":"chart-bar",
 					"Thêm học sinh":"account-plus",
 					"Xóa học sinh":"account-minus",
 					"Xuất dữ liệu điểm":"database",
