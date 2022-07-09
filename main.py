@@ -1,3 +1,5 @@
+from kivy.garden.matplotlib.backend_kivyagg import FigureCanvasKivyAgg
+from matplotlib import pyplot as pl
 from openpyxl import Workbook
 from openpyxl import load_workbook
 from openpyxl.utils import get_column_letter as getcl
@@ -24,6 +26,7 @@ from kivymd.uix.list import OneLineIconListItem,IconLeftWidget
 from kivymd.uix.filemanager import MDFileManager
 from kivymd.uix.dialog import MDDialog
 from kivymd.uix.label import MDLabel
+from kivymd.uix.tab import MDTabsBase,MDTabs
 from kivymd.uix.button import MDFlatButton, MDRectangleFlatButton,MDIconButton,MDFillRoundFlatButton,MDFloatingActionButtonSpeedDial
 from kivymd.uix.toolbar import MDToolbar,MDBottomAppBar
 from kivymd.uix.textfield import MDTextField,MDTextFieldRound
@@ -1019,7 +1022,115 @@ class layout_thietlapmon(GridLayout):
 			args[0].cot.ten=args[0].text
 			args[0].cot.layout_cot.text=f"Cột Điểm: {args[0].text}"
 			args[0].cot.layout_cot.cot=args[0].text
+class Layout_Chart(Screen):
+	def __init__(self,*args,**kwargn):
+		super(Layout_Chart,self).__init__(**kwargn)
+		self.name="Chart"
+		self.menubar=MDToolbar(
+				title="Thống kê dữ liệu", 
+				type="top",
+				pos_hint={'top':1},
+				elevation=10,
+		)
+		self.menubar.left_action_items=[["backspace", lambda x: app.move_tab("Main")]]
+		self.add_widget(self.menubar)
 
+		self.MDTabs=MDTabs(size_hint=(1,None))
+		self.MDTabs.height=Window.height-self.menubar.height
+		self.add_widget(self.MDTabs)
+
+		self.tabs1=MDTabsBase(title="Kết quả học tập")
+		self.ketqua=Screen(size_hint=(None,None),width=Window.width,height=Window.height-self.menubar.height)
+		self.tabs1.add_widget(self.ketqua)
+		self.MDTabs.add_widget(self.tabs1)
+
+
+		self.test=MDTabsBase(title="test")
+		self.MDTabs.add_widget(self.test)
+
+
+		self.MDTabs.bind(size=self.resize)
+	def change_hocki(self,*args):
+		if args[0].text=="Học kì I":
+			args[0].text="Học kì II"
+			self.ketqua.clear_widgets()
+			if self.pie_chart(1)!=None:
+				self.ketqua.add_widget(self.pie_chart(2))
+			self.button=MDFillRoundFlatButton(text="Học kì II")
+			self.button.pos=(Window.width-self.button.width,Window.height-150)
+			self.button.bind(on_press=self.change_hocki)
+			self.ketqua.add_widget(self.button)
+		else:
+			args[0].text="Học kì I"
+			self.ketqua.clear_widgets()
+			if self.pie_chart(1)!=None:
+				self.ketqua.add_widget(self.pie_chart(1))
+			self.button=MDFillRoundFlatButton(text="Học kì I")
+			self.button.pos=(Window.width-self.button.width,Window.height-150)
+			self.button.bind(on_press=self.change_hocki)
+			self.ketqua.add_widget(self.button)
+	def update_chart(self):
+		self.ketqua.clear_widgets()
+		if self.pie_chart(1)!=None:
+			self.ketqua.add_widget(self.pie_chart(1))
+		self.button=MDFillRoundFlatButton(text="Học kì I")
+		self.button.pos=(Window.width-self.button.width,Window.height-150)
+		self.button.bind(on_press=self.change_hocki)
+		self.ketqua.add_widget(self.button)
+	def pie_chart(self,hocki):
+		#Chuẩn bị dữ liệu
+		gioi=app.tong_hocsinh_gioi(hocki)
+		kha=app.tong_hocsinh_kha(hocki)
+		trungbinh=app.tong_hocsinh_trungbinh(hocki)
+		yeu=app.tong_hocsinh_yeu(hocki)
+		kem=app.tong_hocsinh_kem(hocki)
+		tongsohs=app.tongsohs()
+		data=[]
+		data1=[]
+		explode=[]
+		if gioi != 0:
+			data.append(gioi/tongsohs*100)
+			data1.append("Giỏi")
+			explode.append(0)
+		if kha != 0:
+			data.append(kha/tongsohs*100)
+			data1.append("Khá")
+			explode.append(0)
+		if trungbinh != 0:
+			data.append(trungbinh/tongsohs*100)
+			data1.append("Trung bình")
+			explode.append(0)
+		if yeu != 0:
+			data.append(yeu/tongsohs*100)
+			data1.append("Yếu")
+			explode.append(0)
+		if kem != 0:
+			data.append(kem/tongsohs*100)
+			data1.append("Kém")
+			explode.append(0)
+		if gioi == 0 and kha == 0 and trungbinh == 0 and yeu == 0 and kem == 0:
+			return
+		index=0
+		for i in data:
+			if i==min(data):
+				break
+			index+=1
+		explode[index]=0.1
+		pl.clf()
+		pl.pie(
+				data,
+				labels=data1,
+				explode=explode,
+				autopct="%1.3f%%",
+				wedgeprops={"edgecolor":"white","linewidth":1.5}
+			)
+		pl.tight_layout()
+		return FigureCanvasKivyAgg(pl.gcf())
+	def resize(self,*args):
+		if hasattr(self,"button"):
+			self.button.pos=(Window.width-self.button.width,Window.height-150)
+		self.ketqua.width=Window.width
+		self.ketqua.height=Window.height-self.menubar.height
 class Layout_Hocsinh(Screen):
 	def __init__(self,*args,**kwargn):
 		super(Layout_Hocsinh,self).__init__(**kwargn)
@@ -1056,9 +1167,10 @@ class Layout_Hocsinh(Screen):
 		self.Action_Button=MDFloatingActionButtonSpeedDial(
 				root_button_anim= True,
 				data={
+					"Thống khê":"chart-bar",
 					"Thêm học sinh":"account-plus",
 					"Xóa học sinh":"account-minus",
-					"Xuất dữ liệu":"database",
+					"Xuất dữ liệu điểm":"database",
 					"Lưu dữ liệu":"content-save",
 					"Lưu dữ liệu mới":"content-save-all",
 				},
@@ -1081,8 +1193,13 @@ class Layout_Hocsinh(Screen):
 		)
 
 		self.layout_themhs=Layout_Themhocsinh(self.app)
+
 	def slec_hs(self,data):
 		self.Action_Button.close_stack()
+		if data.icon=="chart-bar":
+			app.tab.transition.direction="left"
+			app.tab.current="Chart"
+			app.Chart.update_chart()
 		if data.icon=="account-plus":
 			self.add_widget(self.on_popup)
 			self.add_widget(self.layout_themhs)
@@ -1839,7 +1956,8 @@ class Myapp(MDApp):
 		self.tab.transition.duration=.4
 
 
-
+		self.Chart=Layout_Chart()
+		self.tab.add_widget(self.Chart)
 
 
 		self.Popup_on=ScrollView(
@@ -2028,6 +2146,7 @@ class Myapp(MDApp):
 			self.Toolbar.right_action_items=[["close",self.datatables_rows_update]]
 	#-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
 	def resize(self,window,size):
+		self.Chart.MDTabs.height=Window.height-self.Chart.menubar.height
 		self.tabdiem.View.width=size[0]
 		self.tabdiem.View2.width=size[0]
 	def _thietlapmon_xong(self,*args):
@@ -2409,7 +2528,8 @@ class Myapp(MDApp):
 		pos=(touch.pos[0]-50,touch.pos[1]+20)
 		self.touch_pos=pos
 	def move_tab(self,tab):
-		self.screen.remove_widget(self.bubble)
+		if hasattr(self, 'bubble'):
+			self.screen.remove_widget(self.bubble)
 		if tab == "Main":
 			self.tab.current=tab
 			self.tab.transition.direction="right"
@@ -2775,13 +2895,17 @@ class Myapp(MDApp):
 				all_data_diem=[]
 				alldata.append(sheet.title)
 				hs=""
+				if type(sheet[getcl(2)+"1"].value)!=bool:
+					thongbao(f"Lỗi ở trang tính {sheet.title}, không thể định dạng môn học chính",duration=5)
+					return
+				alldata.append(sheet[getcl(2)+"1"].value)
 				for cot in range(1,sheet.max_column+1):
-					if sheet[getcl(cot)+"1"].value != None:
-						if  sheet[getcl(cot)+"1"].value.lower() == "học kì i":
+					if sheet[getcl(cot)+"2"].value != None:
+						if  sheet[getcl(cot)+"2"].value.lower() == "học kì i":
 							cotHK1=cot
-						if sheet[getcl(cot)+"1"].value.lower() == "học kì ii":
+						if sheet[getcl(cot)+"2"].value.lower() == "học kì ii":
 							cotHK2=cot
-				for hang in range(4,sheet.max_row+1):
+				for hang in range(5,sheet.max_row+1):
 					for cot in range(1,sheet.max_column+1):
 						if cot==1 and sheet[getcl(cot)+str(hang)].value!=None:
 							for tr in self.truong:
@@ -2797,20 +2921,21 @@ class Myapp(MDApp):
 							break
 						if cot > 2 and sheet[getcl(cot)+str(hang)].value!=None:
 							if cot < cotHK2:
-								hs.append(["Học kì I",sheet[getcl(cot)+"2"].value,sheet[getcl(cot)+"3"].value,sheet[getcl(cot)+str(hang)].value])
+								hs.append(["Học kì I",sheet[getcl(cot)+"3"].value,sheet[getcl(cot)+"4"].value,sheet[getcl(cot)+str(hang)].value])
 							else:
-								hs.append(["Học kì II",sheet[getcl(cot)+"2"].value,sheet[getcl(cot)+"3"].value,sheet[getcl(cot)+str(hang)].value])
+								hs.append(["Học kì II",sheet[getcl(cot)+"3"].value,sheet[getcl(cot)+"4"].value,sheet[getcl(cot)+str(hang)].value])
 				if hs!="":
 					all_data_diem.append(hs)
 				alldata.append(all_data_diem)
 		except:
-			thongbao(f'Lỗi không thể đọc tài liệu từ trang tính {sheet.title}')
+			thongbao(f'Lỗi không thể đọc tài liệu từ trang tính {sheet.title}',duration=5)
 			return
 		for data in alldata:
 			if type(data)==str:
 				for mon in self.monhoc:
 					if mon.ten.lower()==data.lower():
-						for item in alldata[alldata.index(data)+1]:
+						mon.monchinh=alldata[alldata.index(data)+1]
+						for item in alldata[alldata.index(data)+2]:
 							for i in item[1:]:
 								if i[0] == "Học kì I":
 									for cot in mon.dhk1:
@@ -2830,7 +2955,8 @@ class Myapp(MDApp):
 				else:
 					#tao mon hoc
 					self.monhoc.append(Monhoc(data))
-					for item in alldata[alldata.index(data)+1]:
+					self.monhoc[-1].monchinh=alldata[alldata.index(data)+1]
+					for item in alldata[alldata.index(data)+2]:
 						for i in item[1:]:
 							if i[0] == "Học kì I":
 								for cot in self.monhoc[-1].dhk1:
@@ -2849,7 +2975,7 @@ class Myapp(MDApp):
 
 		for data in alldata:
 			if type(data)==str:
-				for item in alldata[alldata.index(data)+1]:
+				for item in alldata[alldata.index(data)+2]:
 					hs=self.geths_mahs(item[0])
 					for mon in hs.diemhs:
 						if mon.ten.lower()==data.lower():
@@ -2913,6 +3039,53 @@ class Myapp(MDApp):
 				for hs in lop.hocsinh:
 					if tr.ten.lower()==Mahs.lower():
 						return hs
+	def tongsohs(self):
+		cout=0
+		for tr in self.truong:
+			for lop in tr.lop:
+				for hs in lop.hocsinh:
+					cout+=1
+		return cout
+	def tong_hocsinh_gioi(self,hocki):
+		cout=0
+		for tr in self.truong:
+			for lop in tr.lop:
+				for hs in lop.hocsinh:
+					if hs.xeploai(hocki) == "Giỏi":
+						cout+=1
+		return cout
+	def tong_hocsinh_kha(self,hocki):
+		cout=0
+		for tr in self.truong:
+			for lop in tr.lop:
+				for hs in lop.hocsinh:
+					if hs.xeploai(hocki) == "Khá":
+						cout+=1
+		return cout
+	def tong_hocsinh_trungbinh(self,hocki):
+		cout=0
+		for tr in self.truong:
+			for lop in tr.lop:
+				for hs in lop.hocsinh:
+					if hs.xeploai(hocki) == "Trung bình":
+						cout+=1
+		return cout
+	def tong_hocsinh_yeu(self,hocki):
+		cout=0
+		for tr in self.truong:
+			for lop in tr.lop:
+				for hs in lop.hocsinh:
+					if hs.xeploai(hocki) == "Yếu":
+						cout+=1
+		return cout
+	def tong_hocsinh_kem(self,hocki):
+		cout=0
+		for tr in self.truong:
+			for lop in tr.lop:
+				for hs in lop.hocsinh:
+					if hs.xeploai(hocki) == "Kém":
+						cout+=1
+		return cout
 class getfilepath_Excel(GridLayout):
 	def __init__(self,*args,**kwargn):
 		super(getfilepath_Excel,self).__init__(**kwargn)
