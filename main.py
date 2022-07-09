@@ -1,4 +1,5 @@
 from openpyxl import Workbook
+from openpyxl import load_workbook
 from openpyxl.utils import get_column_letter as getcl
 from openpyxl.styles import Alignment,Font,Border,Side,PatternFill
 import kivy
@@ -108,6 +109,8 @@ class Monhoc:
 		self.dhk1=[]
 		self.dhk2=[]
 		self.layout=None
+		self.layout_hk1=None
+		self.layout_hk2=None
 		self.layout_cotdiem1=[]
 		self.layout_cotdiem2=[]
 		self.monchinh=False
@@ -119,6 +122,12 @@ class Chocsinh:
 		self.ten=ten
 		self.NTNS=NTNS
 		self.truong=None
+		self.phai=True#Nam
+	def _phai(self):
+		if self.phai:
+			return ('human-male','Nam')
+		else:
+			return ('human-female','Nữ')
 	def diemmonchinh(self,hocki):
 		diemmonchinh=0
 		monchinh=app.monhocchinh()
@@ -892,6 +901,8 @@ class layout_thietlapmon(GridLayout):
 		parent.remove_widget(args[0])
 	def load_all_cotdiem(self):
 		for i in self.app.monhoc:
+			i.layout_cotdiem1=[]
+			i.layout_cotdiem2=[]
 			for cotdiem in i.dhk1:
 				cd=MDTextField(
 					font_name="viet",
@@ -1027,7 +1038,8 @@ class Layout_Hocsinh(Screen):
 				("Mã-HS",dp(35)),
 				("Lớp",dp(30)),
 				("Tên học sinh",dp(30)),
-				("NTNS",dp(25))
+				("NTNS",dp(25)),
+				("Phái",dp(15))
 			],
 		)
 		self.datatb.pagination.children[-1].text="Tổng học sinh trong một trang"
@@ -1109,9 +1121,9 @@ class Layout_Hocsinh(Screen):
 		ws_active=wb.active
 		#Sheet chính ***********************************************************************************************************************
 		ws_active.title="Bảng điểm tổng kết"
-		ws_active.append(["Mã-HS","Họ và tên","NTNS","Lớp","ĐIỂM TRUNG BÌNH CÁC MÔN HK1"])
+		ws_active.append(["Mã-HS","Họ và tên","NTNS","Lớp","Phái","ĐIỂM TRUNG BÌNH CÁC MÔN HK1"])
 		tatcamonhoc=[]
-		cot=5
+		cot=6
 		for data in datahs:
 			hs = self.app.geths(data[0],data[1],data[2],data[3])
 			if hs.diemhs != [] and hs.TBTCM(1) != 0 or hs.TBTCM(2) != 0:
@@ -1125,12 +1137,13 @@ class Layout_Hocsinh(Screen):
 		if tatcamonhoc == []:
 			thongbao('Học sinh đã chọn chưa có kết quả học tập')
 			return
-		ws_active.move_range(getcl(6)+"1:"+getcl(cot+10)+"1",rows=0,cols=cot-5)
-		ws_active.merge_cells(getcl(5)+"1:"+getcl(cot-1)+"1")
+		ws_active.move_range(getcl(7)+"1:"+getcl(cot+10)+"1",rows=0,cols=cot-5)
+		ws_active.merge_cells(getcl(6)+"1:"+getcl(cot-1)+"1")
 		ws_active.merge_cells("A1:A2")
 		ws_active.merge_cells("B1:B2")
 		ws_active.merge_cells("C1:C2")
 		ws_active.merge_cells("D1:D2")
+		ws_active.merge_cells("E1:E2")
 		ws_active.merge_cells(getcl(cot)+"1:"+getcl(cot)+"2")
 		ws_active[getcl(cot)+"1"]="TB các môn HK1"
 		hang=3
@@ -1141,7 +1154,8 @@ class Layout_Hocsinh(Screen):
 				ws_active["B"+str(hang)].value=hs.ten
 				ws_active["C"+str(hang)].value=hs.NTNS
 				ws_active["D"+str(hang)].value=hs.lop
-				for i in range(5,cot):
+				ws_active["E"+str(hang)].value=hs._phai()[1]
+				for i in range(6,cot):
 					for mon in hs.diemhs:
 						if mon.ten == ws_active[getcl(i)+"2"].value:
 							ws_active[getcl(i)+str(hang)].value=mon.dtbmon(1)
@@ -1197,6 +1211,7 @@ class Layout_Hocsinh(Screen):
 					ws_active["B"+str(hang)].value=hs.ten
 					ws_active["C"+str(hang)].value=hs.NTNS
 					ws_active["D"+str(hang)].value=hs.lop
+					ws_active["E"+str(hang)].value=hs._phai()[1]
 					for i in range(oldcot,cot):
 						for mon in hs.diemhs:
 							if mon.ten == ws_active[getcl(i)+"2"].value:
@@ -1219,11 +1234,13 @@ class Layout_Hocsinh(Screen):
 			hang = oldhang
 		for hangg in range(1,hang):
 			for cott in range(1,cot+1):
-				ws_active[getcl(cott)+str(hangg)].alignment = Alignment(horizontal='center',vertical = 'center',wrap_text=True)
+				ws_active[getcl(cott)+str(hangg)].alignment = Alignment(horizontal='center',vertical = 'center')
 				if hangg<3:ws_active[getcl(cott)+str(hangg)].fill = PatternFill(fgColor='b7b7b7', fill_type='solid')
 				self.set_border(ws_active,getcl(cott)+str(hangg))
-				if hangg<3 or cott<5:
+				if hangg<3 or cott<6:
 					ws_active[getcl(cott)+str(hangg)].font=Font(bold=True)
+				if ws_active[getcl(cott)+str(hangg)].value != None and ws_active.column_dimensions[getcl(cott)].width < len(str(ws_active[getcl(cott)+str(hangg)].value))+4:
+					ws_active.column_dimensions[getcl(cott)].width=len(str(ws_active[getcl(cott)+str(hangg)].value))+4
 		#Các sheet nhỏ*********************************************************************************************************************
 		ws = []
 		for data in datahs:
@@ -1236,9 +1253,9 @@ class Layout_Hocsinh(Screen):
 						ws.append(wb.create_sheet(mon.ten))
 		for sheet in ws:
 			tonghs=[]
-			sheet.append(["Mã-HS","Họ và tên","NTNS","Lớp","Học kì 1"])
+			sheet.append(["Mã-HS","Họ và tên","NTNS","Lớp","Phái","Học kì 1"])
 			tatcacotdiem=[]
-			cot=5
+			cot=6
 			for data in datahs:
 				hs = self.app.geths(data[0],data[1],data[2],data[3])
 				if hs.diemhs != [] and hs.TBTCM(1) != 0 or hs.TBTCM(2) != 0:
@@ -1257,13 +1274,14 @@ class Layout_Hocsinh(Screen):
 									sheet[getcl(cot)+"2"].value=cotdiem.ten
 									cot+=1
 									tatcacotdiem.append(cotdiem.ten)
-			sheet.move_range(getcl(6)+"1:"+getcl(cot+10)+"1",rows=0,cols=cot-5)
-			if cot != 5:sheet.merge_cells(getcl(5)+"1:"+getcl(cot-1)+"1")
+			sheet.move_range(getcl(7)+"1:"+getcl(cot+10)+"1",rows=0,cols=cot-5)
+			if cot != 6:sheet.merge_cells(getcl(6)+"1:"+getcl(cot-1)+"1")
 			sheet.merge_cells(getcl(cot)+"1:"+getcl(cot)+"2")
 			sheet.merge_cells("A1:A2")
 			sheet.merge_cells("B1:B2")
 			sheet.merge_cells("C1:C2")
 			sheet.merge_cells("D1:D2")
+			sheet.merge_cells("E1:E2")
 			sheet[getcl(cot)+"1"]="TB Môn học kì1"
 			hang=3
 			for data in datahs:
@@ -1276,8 +1294,9 @@ class Layout_Hocsinh(Screen):
 							sheet["B"+str(hang)].value=hs.ten
 							sheet["C"+str(hang)].value=hs.NTNS
 							sheet["D"+str(hang)].value=hs.lop
+							sheet["E"+str(hang)].value=hs._phai()[1]
 							for cotdiem in mon.dhk1:
-								for i in range(4,cot):
+								for i in range(6,cot):
 									if cotdiem.ten == sheet[getcl(i)+"2"].value:
 										hangdiem=oldhang
 										for diemm in cotdiem.diem:
@@ -1286,10 +1305,25 @@ class Layout_Hocsinh(Screen):
 											hangdiem+=1
 											if hang < hangdiem:
 												hang=hangdiem
+										if cotdiem.diem==[]:
+											sheet[getcl(i)+str(hangdiem)].value=0
+											hangdiem+=1
+											if hang < hangdiem:
+												hang=hangdiem
 							for cotdiem in mon.dhk2:
 								if hang < oldhang+len(cotdiem.diem):
 									hang=oldhang+len(cotdiem.diem)
 							sheet[getcl(cot)+str(oldhang)].value=mon.dtbmon(1)
+
+							for cotdiem in mon.dhk1:
+								for i in range(6,cot):
+									if cotdiem.ten == sheet[getcl(i)+"2"].value:
+										for j in range(3,hang):
+											if sheet[getcl(i)+str(j)].value != None:
+												old=[i,j]
+										else:
+											sheet.merge_cells(getcl(old[0])+str(old[1])+":"+getcl(i)+str(j))
+
 			tmp=False
 			for data in datahs:
 				hs = self.app.geths(data[0],data[1],data[2],data[3])
@@ -1345,10 +1379,24 @@ class Layout_Hocsinh(Screen):
 												hangdiem+=1
 												if hang < hangdiem:
 													hang=hangdiem
+											if cotdiem.diem==[]:
+												sheet[getcl(i)+str(hangdiem)].value=0
+												hangdiem+=1
+												if hang < hangdiem:
+													hang=hangdiem
 								for cotdiem in mon.dhk1:
 									if hang < old+len(cotdiem.diem):
 										hang=old+len(cotdiem.diem)
 								sheet[getcl(cot)+str(old)].value=mon.dtbmon(2)
+
+								for cotdiem in mon.dhk2:
+									for i in range(oldcot,cot):
+										if cotdiem.ten == sheet[getcl(i)+"2"].value:
+											for j in range(3,hang):
+												if sheet[getcl(i)+str(j)].value != None:
+													old=[i,j]
+											else:
+												sheet.merge_cells(getcl(old[0])+str(old[1])+":"+getcl(i)+str(j))
 				sheet.move_range(getcl(oldcot+1)+"1:"+getcl(cot+10)+"1",rows=0,cols=cot-oldcot-1)
 				sheet.merge_cells(getcl(oldcot)+"1:"+getcl(cot-1)+"1")
 				sheet.merge_cells(getcl(cot)+"1:"+getcl(cot)+"2")
@@ -1364,6 +1412,7 @@ class Layout_Hocsinh(Screen):
 					sheet.merge_cells("B"+str(j)+":B"+str(i-1))
 					sheet.merge_cells("C"+str(j)+":C"+str(i-1))
 					sheet.merge_cells("D"+str(j)+":D"+str(i-1))
+					sheet.merge_cells("E"+str(j)+":E"+str(i-1))
 					if oldcot != cot:
 						sheet.merge_cells(getcl(oldcot-1)+str(j)+":"+getcl(oldcot-1)+str(i-1))
 					sheet.merge_cells(getcl(cot)+str(j)+":"+getcl(cot)+str(i-1))
@@ -1373,6 +1422,7 @@ class Layout_Hocsinh(Screen):
 				sheet.merge_cells("B"+str(j)+":B"+str(i))
 				sheet.merge_cells("C"+str(j)+":C"+str(i))
 				sheet.merge_cells("D"+str(j)+":D"+str(i))
+				sheet.merge_cells("E"+str(j)+":E"+str(i))
 				if oldcot != cot:
 					sheet.merge_cells(getcl(oldcot-1)+str(j)+":"+getcl(oldcot-1)+str(i))
 				sheet.merge_cells(getcl(cot)+str(j)+":"+getcl(cot)+str(i))
@@ -1382,10 +1432,14 @@ class Layout_Hocsinh(Screen):
 					sheet[getcl(cott)+str(hangg)].alignment = Alignment(horizontal='center',vertical = 'center')
 					if hangg<3:sheet[getcl(cott)+str(hangg)].fill = PatternFill(fgColor='b7b7b7', fill_type='solid')
 					self.set_border(sheet,getcl(cott)+str(hangg))
-					if hangg<3 or cott<5:sheet[getcl(cott)+str(hangg)].font=Font(bold=True)
+					if hangg<3 or cott<6:sheet[getcl(cott)+str(hangg)].font=Font(bold=True)
 					if sheet[getcl(cott)+str(hangg)].value != None and sheet.column_dimensions[getcl(cott)].width < len(str(sheet[getcl(cott)+str(hangg)].value))+2:
 						sheet.column_dimensions[getcl(cott)].width=len(str(sheet[getcl(cott)+str(hangg)].value))+2
-		wb.save(filepath+".xlsx")
+		try:
+			wb.save(filepath+".xlsx")
+		except:
+			thongbao("Lỗi: Hãy xóa cửa sổ excel đang hoạt động và thử lại.")
+			return
 		thongbao(f"Đã xuất dữ liệu thành công ---> {filepath}.xlsx")
 	def set_border(self,ws,cell_range):
 	    thin = Side(border_style="thin", color="000000")
@@ -1398,13 +1452,15 @@ class Layout_Themhocsinh(GridLayout):
 
 		self.cols=1
 		self.pos_hint={"center_x":.5,"center_y":.5}
-		self.size_hint=(.9,.25)
+		self.size_hint=(None,None)
+		self.height=400
+		self.width=700
 		with self.canvas.before:
 			Color(rgba=(62/256, 112/256, 128/256, 1))
 			self.rect=RoundedRectangle(radius=[(40.0, 40.0), (40.0, 40.0), (40.0, 40.0), (40.0, 40.0)])
 		self.bind(pos=self.update_rect,size=self.update_rect)
 		
-		self.Xong_button=MDFillRoundFlatButton(text="Thêm",pos_hint={"center_x":.93})
+		self.Xong_button=MDFillRoundFlatButton(text="Thêm")
 		self.Huy_button=MDFillRoundFlatButton(text="Hủy")
 		self.Xong_button.huy=self.Huy_button
 		self.Huy_button.xong=self.Xong_button
@@ -1447,7 +1503,7 @@ class Layout_Themhocsinh(GridLayout):
 		self.nam.bind(text=self.Textfield_NTNS)
 		self.nam.bind(focus=self.Textfield_NTNS)
 		self.layout_NTNS_picker=GridLayout(rows=1,pos_hint={'center_x':.5,'center_y':.5},size_hint=(None,None),width=500)
-		tmp=Screen()
+		tmp=Screen(size_hint_x=1,size_hint_y=1)
 		tmp.add_widget(self.layout_NTNS_picker)
 		self.layout_NTNS_picker.add_widget(self.ngay)
 		self.layout_NTNS_picker.add_widget(MDLabel(text="/",size_hint_x=None,width=50,halign="center"))
@@ -1503,18 +1559,31 @@ class Layout_Themhocsinh(GridLayout):
 		self.Thongtinhs_layout.add_widget(self.Lop_TextField)
 		self.Thongtinhs_layout.add_widget(self.Hs_TextField)
 		self.menu=MDDropdownMenu(
-					caller=self.Truong_TextField,
+					caller=self.Lop_TextField,
 					max_height=500,
 					width_mult=4,
 					position="bottom"
 				)
+				
+		
+		self.phai=MDIconButton(icon='human-male')
+		self.phai.bind(on_release=self.change_sex)
+		self.phai.pos=(self.pos[0]+self.width/2-self.phai.width/2,self.pos[1])
+
 		tmp=Screen()
+		tmp.add_widget(self.phai)
 		tmp.add_widget(self.Xong_button)
 		tmp.add_widget(self.Huy_button)
 		self.add_widget(tmp)
+		self.Xong_button.pos=(self.pos[0]+self.width-136,self.pos[1])
 		self.xongbutton=False
 		self.settext=True
 #-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*Funtion - Giao diện thông tin HS
+	def change_sex(self,*args):
+		if self.phai.icon=='human-male':
+			self.phai.icon='human-female'
+		else:
+			self.phai.icon='human-male'
 	def Textfield_Checkerror(self,*args):
 		if args[0].text=="" and args[0].focus:
 			args[0].error=True
@@ -1607,9 +1676,8 @@ class Layout_Themhocsinh(GridLayout):
 			self.menu.items=[]
 			self.menu.dismiss()
 			if args[0].hint_text=="Tên lớp":
-				self.menu.caller=self.Lop_TextField
 				all_lop=[]
-				for tr in self.app.truong:
+				for tr in app.truong:
 					for lop in tr.lop:
 						if args[1].lower() in lop.ten.lower() or args[1].upper() in lop.ten.upper() or args[1] in lop.ten:
 							if lop.ten not in all_lop:
@@ -1654,6 +1722,10 @@ class Layout_Themhocsinh(GridLayout):
 						lop.hocsinh.append(Chocsinh(str(self.Hs_TextField.text),str(self.ngay.text)+'/'+str(self.thang.text)+'/'+str(self.nam.text)))
 						lop.hocsinh[-1].truong=tr.ten
 						lop.hocsinh[-1].lop=lop.ten
+						if self.phai.icon=='human-male':
+							lop.hocsinh[-1].phai=True
+						else:
+							lop.hocsinh[-1].phải=False
 		self.app.datatables_rows_update()
 		self.app.screen.remove_widget(self.app.screen.layout_themhs)
 		self.app.screen.remove_widget(self.app.screen.on_popup)
@@ -1709,8 +1781,18 @@ class Myapp(MDApp):
 		)
 		self.item_menubar.Loadfile.add_widget(IconLeftWidget(icon="note"))
 		self.item_menubar.Loadfile.bind(on_release=self.Load_file)
+
+		self.item_menubar.LoadfileExcel=OneLineIconListItem(
+			text='Nhập dữ liệu từ Excel',
+			size_hint_y=None
+		)
+		self.item_menubar.LoadfileExcel.bind(on_release=self.Load_file_Excel)
+		self.item_menubar.LoadfileExcel.add_widget(IconLeftWidget(icon="database-plus"))
 		self.item_menubar.add_widget(
 			self.item_menubar.Loadfile
+		)
+		self.item_menubar.add_widget(
+			self.item_menubar.LoadfileExcel
 		)
 		self.item_menubar.add_widget(ScrollView())
 		self.nav_drawer.add_widget(self.item_menubar)
@@ -1740,6 +1822,13 @@ class Myapp(MDApp):
 			select_path=self.select_pathsave,
 			use_access=True,
 			ext=[".LTP"]
+		)
+		self.Loadfile_Excel_Layout=MDFileManager(
+			exit_manager=lambda x:self.Loadfile_Excel_Layout.close(),
+			select_path=self.select_path_excel_loadfile,
+			selector="file",
+			use_access=True,
+			ext=[".xlsx"]
 		)
 
 		self.Timeload_layout=layout_timeload()
@@ -1792,6 +1881,11 @@ class Myapp(MDApp):
 							"text":"Tìm học sinh",
 							"viewclass": "OneLineListItem",
 							"on_release":lambda x=1:self.loc(x),
+						},
+						{
+							"text":"Lọc học sinh theo phái",
+							"viewclass": "OneLineListItem",
+							"on_release":lambda x=4:self.loc(x),
 						},
 						{
 							"text":"Tìm lớp học",
@@ -1854,6 +1948,9 @@ class Myapp(MDApp):
 								}
 							)
 						all_lop.append(lop.ten)
+			if all_lop==[]:
+				thongbao("không có lớp học nào trong cơ sở dữ liệu")
+				return
 			self.menu_loc.open()
 		elif type==2.1:
 			listt=[]
@@ -1866,6 +1963,7 @@ class Myapp(MDApp):
 							row.append(lop.ten)
 							row.append(hs.ten)
 							row.append(hs.NTNS)
+							row.append(hs._phai())
 							listt.append(tuple(row))
 			self.screen.datatb.row_data=listt
 			self.Toolbar.right_action_items=[["close",self.datatables_rows_update]]
@@ -1873,6 +1971,61 @@ class Myapp(MDApp):
 			layout=layout_lochs()
 			self.screen.add_widget(self.Popup_on)
 			self.screen.add_widget(layout)
+		elif type==4:
+			self.menu_loc=MDDropdownMenu(
+					caller=self.menu_loc.caller,
+					max_height=500,
+					items=[
+							{
+								"text":"Nam",
+								"viewclass": "OneLineListItem",
+								"on_release":lambda x=4.1:self.loc(x),
+							},
+							{
+								"text":"Nữ",
+								"viewclass": "OneLineListItem",
+								"on_release":lambda x=4.2:self.loc(x),
+							},
+						],
+					width_mult=5
+				)
+			self.menu_loc.open()
+		elif type==4.1:
+			listt=[]
+			for tr in self.truong:
+				for lop in tr.lop:
+					for hs in lop.hocsinh:
+						if hs.phai:
+							row=[]
+							row.append(tr.ten)
+							row.append(lop.ten)
+							row.append(hs.ten)
+							row.append(hs.NTNS)
+							row.append(hs._phai())
+							listt.append(tuple(row))
+			if listt==[]:
+				thongbao('Không có học sinh nam trong cơ sở dữ liệu')
+				return
+			self.screen.datatb.row_data=listt
+			self.Toolbar.right_action_items=[["close",self.datatables_rows_update]]
+		elif type==4.2:
+			listt=[]
+			for tr in self.truong:
+				for lop in tr.lop:
+					for hs in lop.hocsinh:
+						if not hs.phai:
+							row=[]
+							row.append(tr.ten)
+							row.append(lop.ten)
+							row.append(hs.ten)
+							row.append(hs.NTNS)
+							row.append(hs._phai())
+							listt.append(tuple(row))
+			if listt==[]:
+				thongbao('Không có học sinh nữ trong cơ sở dữ liệu')
+				return
+			self.screen.datatb.row_data=listt
+			self.Toolbar.right_action_items=[["close",self.datatables_rows_update]]
 	#-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-
 	def resize(self,window,size):
 		self.tabdiem.View.width=size[0]
@@ -1907,18 +2060,18 @@ class Myapp(MDApp):
 			for mon in self.geths(self.data_hocsinh[0],self.data_hocsinh[1],self.data_hocsinh[2],self.data_hocsinh[3]).diemhs:
 				self.themmon(mon.ten)
 				for cotdiem in mon.dhk1:
+					load=False
 					for diem in cotdiem.diem:
 						try:
 							d=float(diem)
-							load=False
 							self.themdiem(1,mon.ten,cotdiem.ten,diem)
 						except:
 							pass
 				for cotdiem in mon.dhk2:
+					load=False
 					for diem in cotdiem.diem:
 						try:
 							d=float(diem)
-							load=False
 							self.themdiem(2,mon.ten,cotdiem.ten,diem)
 						except:
 							pass
@@ -2236,7 +2389,7 @@ class Myapp(MDApp):
 								if type(item) == kivymd.uix.label.MDLabel:
 									if args[2]==item.cot:
 										diemso.alldiem=button.parent
-										diemso.text=args[3]
+										diemso.text=str(args[3])
 										button.parent.add_widget(View3)
 										button.parent.add_widget(layout)
 										button.parent.remove_widget(button)
@@ -2346,6 +2499,9 @@ class Myapp(MDApp):
 												hs.NTNS = ntns
 												hs.truong=tr.ten
 												hs.lop=lop.ten
+					elif ("phai::" in i):
+						if i[6::] == "False":
+							self.geths(tent,tenl,tenh,ntns).phai=False
 					elif ("MHHS" in i):
 						self.geths(tent,tenl,tenh,ntns).themmh(i[6:])
 					elif ("CDHK1::" in i):
@@ -2431,6 +2587,7 @@ class Myapp(MDApp):
 					for hs in lop.hocsinh:
 						f.write('THS::'+hs.ten+'\n')
 						f.write('NTNS::'+hs.NTNS+'\n')
+						f.write('phai::'+str(hs.phai)+'\n')
 						tmp = 1
 						for diemhs in hs.diemhs:
 							if tmp == 1:
@@ -2494,10 +2651,15 @@ class Myapp(MDApp):
 					row.append(lop.ten)
 					row.append(hs.ten)
 					row.append(hs.NTNS)
+					row.append(hs._phai())
 					listt.append(tuple(row))
 		self.screen.datatb.row_data=listt
 		self.Toolbar.right_action_items=[["account-search",self.lochs]]
 	def on_check_press(self,*args):
+		if args[1][4]=="Nam":
+			args[1][4]=('human-male', 'Nam')
+		else:
+			args[1][4]=('human-female', 'Nữ')
 		index=self.screen.datatb.row_data.index(tuple(args[1]))
 		if index in self.screen.datatb.indexx:
 			self.screen.datatb.indexx.remove(index)
@@ -2512,8 +2674,6 @@ class Myapp(MDApp):
 			start_index, end_index = row.table.recycle_data[row.index]["range"]
 			for i in range(start_index,end_index+1):
 				self.data_hocsinh.append(row.table.recycle_data[i]["text"])
-			if self.data_hocsinh == ['','','','']:
-				return
 			self.show_bubble()
 	def themtruong(self,tentruong):
 		self.truong.append(Ctruong(tentruong))
@@ -2559,6 +2719,200 @@ class Myapp(MDApp):
 	    return monchinh
 		# pop=Popup(title="a",size_hint=(0.8,0.8),pos_hint={"center_x":0.5,"center_y":0.5},content=layout)
 		# pop.open()
+	def Load_file_Excel(self,*args):
+		if platform == 'android':
+			self.Loadfile_Excel_Layout.show("/storage/emulated/0")
+		else:
+			self.Loadfile_Excel_Layout.show("/Users/Administrator")
+	def select_path_excel_loadfile(self,*args):
+		self.path_loadfile_excel=args[0]
+		self.Loadfile_Excel_Layout.close()
+		wb=load_workbook(self.path_loadfile_excel)
+		ws_active=wb[wb.get_sheet_names()[0]]
+		datahs=[]
+		try:
+			for hang in range(2,ws_active.max_row+1):
+				data=[]
+				dont_in_data=False
+				for cot in range(1,ws_active.max_column+1):
+					for tr in self.truong:
+						if ws_active[getcl(cot)+str(hang)].value == tr.ten:
+							dont_in_data=True
+							break
+					else:
+						data.append(ws_active[getcl(cot)+str(hang)].value)
+					if dont_in_data:break
+				if data != []:
+					datahs.append(data)
+			for hs in datahs:
+				self.truong.append(Ctruong(hs[0]))
+				tmp=False
+				for tr in self.truong:
+					for lop in tr.lop:
+						if lop.ten.lower() == hs[3].lower():
+							self.truong[-1].lop.append(Clop(lop.ten))
+							tmp=True
+							break
+					if tmp:
+						break
+				else:
+					self.truong[-1].lop.append(Clop(hs[3]))
+				self.truong[-1].lop[-1].hocsinh.append(Chocsinh(hs[1],hs[2]))
+				if hs[4]=="Nữ":
+					self.truong[-1].lop[-1].hocsinh[-1].phai=False
+			self.datatables_rows_update()
+		except:
+			thongbao('Lỗi không thể đọc tài liệu ở danh sách học sinh')
+			return
+
+
+
+		alldata=[]
+		try:
+			for mon_sheet in wb.get_sheet_names()[1:]:
+				sheet=wb[mon_sheet]
+				skip=False
+				all_data_diem=[]
+				alldata.append(sheet.title)
+				hs=""
+				for cot in range(1,sheet.max_column+1):
+					if sheet[getcl(cot)+"1"].value != None:
+						if  sheet[getcl(cot)+"1"].value.lower() == "học kì i":
+							cotHK1=cot
+						if sheet[getcl(cot)+"1"].value.lower() == "học kì ii":
+							cotHK2=cot
+				for hang in range(4,sheet.max_row+1):
+					for cot in range(1,sheet.max_column+1):
+						if cot==1 and sheet[getcl(cot)+str(hang)].value!=None:
+							for tr in self.truong:
+								if tr.ten.lower() == sheet[getcl(cot)+str(hang)].value.lower():
+									if hs!="":
+										all_data_diem.append(hs)
+									hs=[sheet[getcl(cot)+str(hang)].value]
+									skip=False
+									break
+							else:
+								skip=True
+						if skip:
+							break
+						if cot > 2 and sheet[getcl(cot)+str(hang)].value!=None:
+							if cot < cotHK2:
+								hs.append(["Học kì I",sheet[getcl(cot)+"2"].value,sheet[getcl(cot)+"3"].value,sheet[getcl(cot)+str(hang)].value])
+							else:
+								hs.append(["Học kì II",sheet[getcl(cot)+"2"].value,sheet[getcl(cot)+"3"].value,sheet[getcl(cot)+str(hang)].value])
+				if hs!="":
+					all_data_diem.append(hs)
+				alldata.append(all_data_diem)
+		except:
+			thongbao(f'Lỗi không thể đọc tài liệu từ trang tính {sheet.title}')
+			return
+		for data in alldata:
+			if type(data)==str:
+				for mon in self.monhoc:
+					if mon.ten.lower()==data.lower():
+						for item in alldata[alldata.index(data)+1]:
+							for i in item[1:]:
+								if i[0] == "Học kì I":
+									for cot in mon.dhk1:
+										if cot.ten.lower() == i[1].lower():
+											break
+									else:
+										#tao cot diem
+										mon.dhk1.append(Diem(i[1],i[2]))
+								if i[0] == "Học kì II":
+									for cot in mon.dhk2:
+										if cot.ten.lower() == i[1].lower():
+											break
+									else:
+										#tao cot diem
+										mon.dhk2.append(Diem(i[1],i[2]))
+						break
+				else:
+					#tao mon hoc
+					self.monhoc.append(Monhoc(data))
+					for item in alldata[alldata.index(data)+1]:
+						for i in item[1:]:
+							if i[0] == "Học kì I":
+								for cot in self.monhoc[-1].dhk1:
+									if cot.ten.lower() == i[1].lower():
+										break
+								else:
+									#tao cot diem
+									self.monhoc[-1].dhk1.append(Diem(i[1],i[2]))
+							if i[0] == "Học kì II":
+								for cot in self.monhoc[-1].dhk2:
+									if cot.ten.lower() == i[1].lower():
+										break
+								else:
+									#tao cot diem
+									self.monhoc[-1].dhk2.append(Diem(i[1],i[2]))
+
+		for data in alldata:
+			if type(data)==str:
+				for item in alldata[alldata.index(data)+1]:
+					hs=self.geths_mahs(item[0])
+					for mon in hs.diemhs:
+						if mon.ten.lower()==data.lower():
+
+							for cotdiem in mon.dhk1:
+								cotdiem.diem=[]
+							for cotdiem in mon.dhk2:#remove all diem
+								cotdiem.diem=[]
+
+							for i in item[1:]:
+								if i[0]=='Học kì I':
+									for cotdiem in mon.dhk1:
+										if cotdiem.ten.lower()==i[1].lower():
+											break
+									else:
+										mon.dhk1.append(Cotdiemhs(i[1]))
+									for cotdiem in mon.dhk1:
+										if cotdiem.ten.lower() == i[1].lower():
+											cotdiem.diem.append(float(i[3]))
+								if i[0]=='Học kì II':
+									for cotdiem in mon.dhk2:
+										if cotdiem.ten.lower()==i[1].lower():
+											break
+									else:
+										mon.dhk2.append(Cotdiemhs(i[1]))
+									for cotdiem in mon.dhk2:
+										if cotdiem.ten.lower() == i[1].lower():
+											cotdiem.diem.append(float(i[3]))
+							break
+					else:
+						#them mon hoc cho hs
+						for mon in self.monhoc:
+							if mon.ten.lower() == data.lower():
+								hs.diemhs.append(Diemhs(mon.ten))
+								for i in item[1:]:
+									if i[0]=='Học kì I':
+										for cotdiem in hs.diemhs[-1].dhk1:
+											if cotdiem.ten.lower()==i[1].lower():
+												break
+										else:
+											hs.diemhs[-1].dhk1.append(Cotdiemhs(i[1]))
+										for cotdiem in hs.diemhs[-1].dhk1:
+											if cotdiem.ten.lower() == i[1].lower():
+												cotdiem.diem.append(float(i[3]))
+									if i[0]=='Học kì II':
+										for cotdiem in hs.diemhs[-1].dhk2:
+											if cotdiem.ten.lower()==i[1].lower():
+												break
+										else:
+											hs.diemhs[-1].dhk2.append(Cotdiemhs(i[1]))
+										for cotdiem in hs.diemhs[-1].dhk2:
+											if cotdiem.ten.lower() == i[1].lower():
+												cotdiem.diem.append(float(i[3]))
+		self.load_dulieu_monhoc()
+		self.layout_thietlapmon.load_all_cotdiem()
+		thongbao("Đã nhập dữ liệu thành công")
+
+	def geths_mahs(self,Mahs):
+		for tr in self.truong:
+			for lop in tr.lop:
+				for hs in lop.hocsinh:
+					if tr.ten.lower()==Mahs.lower():
+						return hs
 class getfilepath_Excel(GridLayout):
 	def __init__(self,*args,**kwargn):
 		super(getfilepath_Excel,self).__init__(**kwargn)
@@ -2728,6 +3082,7 @@ class layout_timhocsinh_MHS(GridLayout):
 						row.append(lop.ten)
 						row.append(hs.ten)
 						row.append(hs.NTNS)
+						row.append(hs._phai())
 						listt.append(tuple(row))
 		if listt == []:
 			thongbao("Mã học sinh không tồn tại")
@@ -2817,6 +3172,7 @@ class layout_timhocsinh_ten(GridLayout):
 						row.append(lop.ten)
 						row.append(hs.ten)
 						row.append(hs.NTNS)
+						row.append(hs._phai())
 						listt.append(tuple(row))
 		if listt == []:
 			thongbao("Tên học sinh không tồn tại")
@@ -2963,23 +3319,23 @@ class layout_lochs(GridLayout):
 							if self.hocki.text == "Học kì I":
 								if self.min.text != "" and self.max.text != "":
 									if mon.dtbmon(1) >= float(self.min.text) and mon.dtbmon(1) <= float(self.max.text):
-										data.append((tr.ten,lop.ten,hs.ten,hs.NTNS))
+										data.append((tr.ten,lop.ten,hs.ten,hs.NTNS,hs._phai()))
 								elif self.min.text != "":
 									if mon.dtbmon(1) >= float(self.min.text):
-										data.append((tr.ten,lop.ten,hs.ten,hs.NTNS))
+										data.append((tr.ten,lop.ten,hs.ten,hs.NTNS,hs._phai()))
 								else:
 									if mon.dtbmon(1) <= float(self.max.text):
-										data.append((tr.ten,lop.ten,hs.ten,hs.NTNS))
+										data.append((tr.ten,lop.ten,hs.ten,hs.NTNS,hs._phai()))
 							else:
 								if self.min.text != "" and self.max.text != "":
 									if mon.dtbmon(2) >= float(self.min.text) and mon.dtbmon(2) <= float(self.max.text):
-										data.append((tr.ten,lop.ten,hs.ten,hs.NTNS))
+										data.append((tr.ten,lop.ten,hs.ten,hs.NTNS,hs._phai()))
 								elif self.min.text != "":
 									if mon.dtbmon(2) >= float(self.min.text):
-										data.append((tr.ten,lop.ten,hs.ten,hs.NTNS))
+										data.append((tr.ten,lop.ten,hs.ten,hs.NTNS,hs._phai()))
 								else:
 									if mon.dtbmon(2) <= float(self.max.text):
-										data.append((tr.ten,lop.ten,hs.ten,hs.NTNS))
+										data.append((tr.ten,lop.ten,hs.ten,hs.NTNS,hs._phai()))
 		if data == []:
 			thongbao("Không có học sinh nào đạt số điểm này")
 			return
