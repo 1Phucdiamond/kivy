@@ -1,5 +1,6 @@
 from kivymatplotlib.backend_kivyagg import FigureCanvasKivyAgg
 from matplotlib import pyplot as pl
+import matplotlib
 from openpyxl import Workbook
 from openpyxl import load_workbook
 from openpyxl.utils import get_column_letter as getcl
@@ -1026,6 +1027,11 @@ class Layout_Chart(Screen):
 	def __init__(self,*args,**kwargn):
 		super(Layout_Chart,self).__init__(**kwargn)
 		self.name="Chart"
+		font = {'family' : 'normal',
+        'weight' : 'bold',
+        'size'   : 22}
+		matplotlib.rc('font', **font)
+		
 		self.menubar=MDToolbar(
 				title="Thống kê dữ liệu", 
 				type="top",
@@ -1033,6 +1039,7 @@ class Layout_Chart(Screen):
 				elevation=10,
 		)
 		self.menubar.left_action_items=[["backspace", lambda x: app.move_tab("Main")]]
+		self.menubar.right_action_items=[["swap-horizontal", self.open_menu]]
 		self.add_widget(self.menubar)
 
 		self.MDTabs=MDTabs(size_hint=(1,None))
@@ -1040,7 +1047,7 @@ class Layout_Chart(Screen):
 		self.add_widget(self.MDTabs)
 
 		self.tabs1=MDTabsBase(title="Kết quả học tập")
-		self.ketqua=Screen(size_hint=(None,None),width=Window.width,height=Window.height-self.menubar.height)
+		self.ketqua=GridLayout(cols=1,size_hint=(None,None),width=Window.width,height=Window.height-self.menubar.height)
 		self.tabs1.add_widget(self.ketqua)
 		self.MDTabs.add_widget(self.tabs1)
 
@@ -1050,31 +1057,93 @@ class Layout_Chart(Screen):
 
 
 		self.MDTabs.bind(size=self.resize)
+	def open_menu(self,*args):
+		self.menu=MDDropdownMenu(
+				caller=args[0],
+				max_height=250,
+				items=[
+						{
+							"text":"Học kì I",
+							"viewclass": "OneLineListItem",
+							"on_release":lambda x="Học kì I":self.change_hocki(x),
+						},
+						{
+							"text":"Học kì II",
+							"viewclass": "OneLineListItem",
+							"on_release":lambda x="Học kì II":self.change_hocki(x),
+						},
+					],
+				width_mult=2
+			)
+		self.menu.open()
 	def change_hocki(self,*args):
-		if args[0].text=="Học kì I":
-			args[0].text="Học kì II"
-			self.button=MDFillRoundFlatButton(text="Học kì II" ,pos=self.ketqua.children[0].pos)
-			self.ketqua.clear_widgets()
-			if self.pie_chart(1)!=None:
-				self.ketqua.add_widget(self.pie_chart(2))
-			self.button.bind(on_press=self.change_hocki)
-			self.ketqua.add_widget(self.button)
+		self.fig.clf()
+		self.fig, self.axs = pl.subplots(2)
+		self.fig.tight_layout(pad=5)
+		if args[0]=="Học kì I":
+			self.bar_chart(1)
+			self.pie_chart(1)
 		else:
-			args[0].text="Học kì I"
-			self.button=MDFillRoundFlatButton(text="Học kì I" ,pos=self.ketqua.children[0].pos)
-			self.ketqua.clear_widgets()
-			if self.pie_chart(1)!=None:
-				self.ketqua.add_widget(self.pie_chart(1))
-			self.button.bind(on_press=self.change_hocki)
-			self.ketqua.add_widget(self.button)
+			self.bar_chart(2)
+			self.pie_chart(2)
+		self.ketqua.remove_widget(self.chart)
+		self.chart=FigureCanvasKivyAgg(pl.gcf())
+		self.ketqua.add_widget(self.chart)
+		self.menu.dismiss()
 	def update_chart(self):
 		self.ketqua.clear_widgets()
-		if self.pie_chart(1)!=None:
-			self.ketqua.add_widget(self.pie_chart(1))
-		self.button=MDFillRoundFlatButton(text="Học kì I")
-		self.button.pos=(Window.width-self.button.width*1.85,Window.height-300)
-		self.button.bind(on_press=self.change_hocki)
-		self.ketqua.add_widget(self.button)
+
+		self.fig, self.axs = pl.subplots(2)
+		self.fig.tight_layout(pad=5)
+
+		self.bar_chart(1)
+		self.pie_chart(1)
+
+		self.chart=FigureCanvasKivyAgg(pl.gcf())
+		self.ketqua.add_widget(self.chart)
+	def bar_chart(self,hocki):
+		xeploai=[]
+		label=[]
+		annotate=[]
+		tonghs_gioi=app.tong_hocsinh_gioi(hocki)
+		tonghs_kha=app.tong_hocsinh_kha(hocki)
+		tonghs_trungbinh=app.tong_hocsinh_trungbinh(hocki)
+		tonghs_yeu=app.tong_hocsinh_yeu(hocki)
+		tonghs_kem=app.tong_hocsinh_kem(hocki)
+		color=[]
+		if tonghs_gioi!=0:
+			xeploai.append(tonghs_gioi)
+			label.append("Giỏi")
+			color.append("#81F0D1")
+			annotate.append([tonghs_gioi,(len(label)-1,tonghs_gioi)])
+		if tonghs_kha!=0:
+			xeploai.append(tonghs_kha)
+			label.append("Khá")
+			color.append("#ACF081")
+			annotate.append([tonghs_kha,(len(label)-1,tonghs_kha)])
+		if tonghs_trungbinh!=0:
+			xeploai.append(tonghs_trungbinh)
+			label.append("Trung bình")
+			color.append("#D8F081")
+			annotate.append([tonghs_trungbinh,(len(label)-1,tonghs_trungbinh)])
+		if tonghs_yeu!=0:
+			xeploai.append(tonghs_yeu)
+			label.append("Yếu")
+			color.append("#F0B581")
+			annotate.append([tonghs_yeu,(len(label)-1,tonghs_yeu)])
+		if tonghs_kem!=0:
+			xeploai.append(tonghs_kem)
+			label.append("Kém")
+			color.append("#FF7272")
+			annotate.append([tonghs_kem,(len(label)-1,tonghs_kem)])
+		self.axs[1].bar(label,xeploai,color=color)
+		help(self.axs[1].bar)
+		for i in annotate:
+			print(i[0],i[1])
+			self.axs[1].annotate(
+				i[0],
+				xy=i[1]
+				)
 	def pie_chart(self,hocki):
 		#Chuẩn bị dữ liệu
 		gioi=app.tong_hocsinh_gioi(hocki)
@@ -1086,48 +1155,51 @@ class Layout_Chart(Screen):
 		data=[]
 		data1=[]
 		explode=[]
+		color=[]
 		if gioi != 0:
 			data.append(gioi/tongsohs*100)
 			data1.append("Giỏi")
 			explode.append(0)
+			color.append("#81F0D1")
 		if kha != 0:
 			data.append(kha/tongsohs*100)
 			data1.append("Khá")
 			explode.append(0)
+			color.append("#ACF081")
 		if trungbinh != 0:
 			data.append(trungbinh/tongsohs*100)
 			data1.append("Trung bình")
 			explode.append(0)
+			color.append("#D8F081")
 		if yeu != 0:
 			data.append(yeu/tongsohs*100)
 			data1.append("Yếu")
 			explode.append(0)
+			color.append("#F0B581")
 		if kem != 0:
 			data.append(kem/tongsohs*100)
 			data1.append("Kém")
 			explode.append(0)
+			color.append("#FF7272")
 		if gioi == 0 and kha == 0 and trungbinh == 0 and yeu == 0 and kem == 0:
 			return
 		index=0
+		all_index=[]
 		for i in data:
 			if i==min(data):
-				break
+				all_index.append(index)
 			index+=1
-		explode[index]=0.1
-		pl.clf()
-		pl.pie(
+		for index in all_index:
+			explode[index]=0.1
+		self.axs[0].pie(
 				data,
 				labels=data1,
 				explode=explode,
 				autopct="%1.3f%%",
+				colors=color,
 				wedgeprops={"edgecolor":"white","linewidth":1.5},
-				textprops={'fontsize': 28}
 			)
-		pl.tight_layout(pad=3)
-		return FigureCanvasKivyAgg(pl.gcf())
 	def resize(self,*args):
-		if hasattr(self,"button"):
-			self.button.pos=(self.width-self.button.width,Window.height-300)
 		self.ketqua.width=Window.width
 		self.ketqua.height=Window.height-self.menubar.height
 class Layout_Hocsinh(Screen):
