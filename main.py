@@ -3154,6 +3154,8 @@ class Myapp(MDApp):
 				else:
 					self.truong[-1].lop.append(Clop(hs[3]))
 				self.truong[-1].lop[-1].hocsinh.append(Chocsinh(hs[1],hs[2]))
+				self.truong[-1].lop[-1].hocsinh[-1].lop=self.truong[-1].lop[-1].ten
+				self.truong[-1].lop[-1].hocsinh[-1].truong=self.truong[-1].ten
 				if hs[4]=="Nữ":
 					self.truong[-1].lop[-1].hocsinh[-1].phai=False
 			self.datatables_rows_update()
@@ -3280,6 +3282,13 @@ class Myapp(MDApp):
 									for cotdiem in mon.dhk2:
 										if cotdiem.ten.lower() == i[1].lower():
 											cotdiem.diem.append(float(i[3]))
+							
+							tmp=mon.dhk1.copy()
+							tmp.reverse()
+							mon.dhk1=tmp.copy()
+							tmp=mon.dhk2.copy()
+							tmp.reverse()
+							mon.dhk2=tmp.copy()
 							break
 					else:
 						#them mon hoc cho hs
@@ -3305,6 +3314,13 @@ class Myapp(MDApp):
 										for cotdiem in hs.diemhs[-1].dhk2:
 											if cotdiem.ten.lower() == i[1].lower():
 												cotdiem.diem.append(float(i[3]))
+							tmp=hs.diemhs[-1].dhk1.copy()
+							tmp.reverse()
+							hs.diemhs[-1].dhk1=tmp.copy()
+							tmp=hs.diemhs[-1].dhk2.copy()
+							tmp.reverse()
+							hs.diemhs[-1].dhk2=tmp.copy()
+							
 		self.load_dulieu_monhoc()
 		self.layout_thietlapmon.load_all_cotdiem()
 		thongbao("Đã nhập dữ liệu thành công")
