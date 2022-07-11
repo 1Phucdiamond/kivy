@@ -1039,65 +1039,272 @@ class Layout_Chart(Screen):
 				elevation=10,
 		)
 		self.menubar.left_action_items=[["backspace", lambda x: app.move_tab("Main")]]
-		self.menubar.right_action_items=[["swap-horizontal", self.open_menu]]
 		self.add_widget(self.menubar)
 
 		self.MDTabs=MDTabs(size_hint=(1,None))
 		self.MDTabs.height=Window.height-self.menubar.height
+		self.MDTabs.bind(on_tab_switch=self.slec_tab)
 		self.add_widget(self.MDTabs)
 
 		self.tabs1=MDTabsBase(title="Kết quả học tập")
-		self.ketqua=GridLayout(cols=1,size_hint=(None,None),width=Window.width,height=Window.height-self.menubar.height)
+		self.ketqua=GridLayout(cols=1,padding=20,size=(self.MDTabs.size[0],self.MDTabs.size[1]-100))
 		self.tabs1.add_widget(self.ketqua)
+		self.button_ketqua=GridLayout(rows=1,size_hint=(None,None))
+		self.hocki_ketqua=MDRectangleFlatButton(text="Học kì I")
+		self.hocki_ketqua.bind(on_release=self.change_hocki)
+		self.button_ketqua.add_widget(self.hocki_ketqua)
+		self.lop_ketqua=MDRectangleFlatButton(text="Toàn khối")
+		self.lop_ketqua.bind(on_release=self.open_lop_ketqua)
+		self.button_ketqua.add_widget(self.lop_ketqua)
+		self.ketqua.add_widget(self.button_ketqua)
 		self.MDTabs.add_widget(self.tabs1)
 
 
-		self.test=MDTabsBase(title="test")
-		self.MDTabs.add_widget(self.test)
-
+		self.diemcacmon=MDTabsBase(title="Điểm")
+		self.MDTabs.add_widget(self.diemcacmon)
+		self.diemcacmon_layout=GridLayout(cols=1,padding=20,size=(self.MDTabs.size[0],self.MDTabs.size[1]-100))
+		self.all_button=GridLayout(rows=1,size_hint=(None,None))
+		self.hocki=MDRectangleFlatButton(text="Học kì I")
+		self.hocki.bind(on_release=self.change_hocki_diem)
+		self.monhoc=MDRectangleFlatButton(text="Tất cả môn")
+		self.monhoc.bind(on_release=self.open_menu_monhoc)
+		self.cotdiem=MDRectangleFlatButton(text="Tất cả cột")
+		self.cotdiem.bind(on_release=self.open_menu_cotdiem)
+		self.lop=MDRectangleFlatButton(text="Toàn khối")
+		self.lop.bind(on_release=self.open_menu_lop)
+		self.all_button.add_widget(self.hocki)
+		self.all_button.add_widget(self.lop)
+		self.all_button.add_widget(self.monhoc)
+		self.all_button.add_widget(self.cotdiem)
+		self.diemcacmon_layout.add_widget(self.all_button)
+		self.diemcacmon.add_widget(self.diemcacmon_layout)
 
 		self.MDTabs.bind(size=self.resize)
-	def open_menu(self,*args):
+	def slec_tab(self,*args):
+		try:
+			if args[3]=="Kết quả học tập" and "Kết quả học tập" in self.all_tab:
+				self.update_chart()
+				self.all_tab.remove("Kết quả học tập")
+			elif args[3]=="Điểm" and 'Điểm' in self.all_tab:
+				self.update_diem()
+				self.all_tab.remove('Điểm')
+		except:
+			self.lop_ketqua.text="Toàn khối"
+			self.monhoc.text="Tất cả môn"
+			self.cotdiem.text="Tất cả cột"
+			self.lop.text="Toàn khối"
+			self.all_tab=['Điểm','Kết quả học tập']
+			if self.MDTabs.carousel.current_slide.tab_label.text == "Kết quả học tập":
+				self.update_chart()
+				self.all_tab.remove("Kết quả học tập")
+			elif self.MDTabs.carousel.current_slide.tab_label.text == "Điểm":
+				self.update_diem()
+				self.all_tab.remove('Điểm')
+	def update_diem(self):
+		pl.clf()
+		pl.tight_layout(pad=5)
+
+		self.diemcacmon_chart()
+	def diemcacmon_chart(self):
+		all_diem=[]
+		for tr in app.truong:
+			for lop in tr.lop:
+				if lop.ten == self.lop.text or self.lop.text == "Toàn khối":
+					for hs in lop.hocsinh:
+						for mon in hs.diemhs:
+							if mon.ten == self.monhoc.text or self.monhoc.text == "Tất cả môn":
+								if self.hocki.text=="Học kì I":
+									for cotdiem in mon.dhk1:
+										if cotdiem.ten == self.cotdiem.text or self.cotdiem.text == "Tất cả cột":
+											for diem in cotdiem.diem:
+												all_diem.append(diem)
+								else:
+									for cotdiem in mon.dhk2:
+										if cotdiem.ten == self.cotdiem.text or self.cotdiem.text == "Tất cả cột":
+											for diem in cotdiem.diem:
+												all_diem.append(diem)
+		data1=[]
+		data2=[]
+		all_diem.sort()
+		annotate=[]
+		countt=0
+		for i in all_diem:
+			if i not in data2:
+				data1.append(all_diem.count(i))
+				annotate.append([all_diem.count(i),(str(i),all_diem.count(i))])
+				data2.append(str(i))
+				countt+=1
+		if len(self.diemcacmon_layout.children)==2:
+			self.diemcacmon_layout.remove_widget(self.diemcacmon_layout.children[0])
+		pl.clf()
+		pl.tight_layout(pad=5)
+		pl.bar(data2,data1,color="#81F0D1")
+		pl.xlabel("Điểm")
+		pl.ylabel("Số học sinh")
+		for i in annotate:
+			pl.annotate(
+				i[0],
+				xy=i[1]
+				)
+		self.chart1=FigureCanvasKivyAgg(pl.gcf())
+		self.diemcacmon_layout.add_widget(self.chart1)
+	def change_hocki_diem(self,*args):
+		if args[0].text == "Học kì I":
+			args[0].text="Học kì II"
+		else:
+			args[0].text="Học kì I"
+		self.cotdiem.text="Tất cả cột"
+		self.diemcacmon_chart()
+	def open_menu_lop(self,*args):
 		self.menu=MDDropdownMenu(
 				caller=args[0],
-				max_height=250,
-				items=[
-						{
-							"text":"Học kì I",
-							"viewclass": "OneLineListItem",
-							"on_release":lambda x="Học kì I":self.change_hocki(x),
-						},
-						{
-							"text":"Học kì II",
-							"viewclass": "OneLineListItem",
-							"on_release":lambda x="Học kì II":self.change_hocki(x),
-						},
-					],
-				width_mult=2
+				max_height=500,
+				width_mult=4,
+				position="bottom"
 			)
-		self.menu.open()
+		all_lop=[]
+		if self.lop.text != "Toàn khối":
+			self.menu.items.append({
+							"text":"Toàn khối",
+							"viewclass": "OneLineListItem",
+							"on_release":lambda x="Toàn khối":self.slec_lop(x),
+						})
+		for tr in app.truong:
+			for lop in tr.lop:
+				if lop.ten not in all_lop and lop.ten != self.lop.text:
+					self.menu.items.append({
+							"text":lop.ten,
+							"viewclass": "OneLineListItem",
+							"on_release":lambda x=lop.ten:self.slec_lop(x),
+						})
+					all_lop.append(lop.ten)
+		if self.menu.items!=[]:self.menu.open()
+	def open_lop_ketqua(self,*args):
+		self.menu=MDDropdownMenu(
+				caller=args[0],
+				max_height=500,
+				width_mult=4,
+				position="bottom"
+			)
+		all_lop=[]
+		if self.lop_ketqua.text != "Toàn khối":
+			self.menu.items.append({
+							"text":"Toàn khối",
+							"viewclass": "OneLineListItem",
+							"on_release":lambda x="Toàn khối":self.slec_lop_ketqua(x),
+						})
+		for tr in app.truong:
+			for lop in tr.lop:
+				if lop.ten not in all_lop and lop.ten != self.lop_ketqua.text:
+					self.menu.items.append({
+							"text":lop.ten,
+							"viewclass": "OneLineListItem",
+							"on_release":lambda x=lop.ten:self.slec_lop_ketqua(x),
+						})
+					all_lop.append(lop.ten)
+		if self.menu.items!=[]:self.menu.open()
+	def slec_lop_ketqua(self,lop):
+		self.lop_ketqua.text=lop
+		self.update_chart()
+		self.menu.dismiss()
+	def open_menu_monhoc(self,*args):
+		self.menu=MDDropdownMenu(
+				caller=args[0],
+				max_height=500,
+				width_mult=4,
+				position="bottom"
+			)
+		if self.monhoc.text != "Tất cả môn":
+			self.menu.items.append({
+							"text":"Tất cả môn",
+							"viewclass": "OneLineListItem",
+							"on_release":lambda x="Tất cả môn":self.slec_mon(x),
+						})
+		for mon in app.monhoc:
+			if mon.ten != self.monhoc.text:
+				self.menu.items.append({
+						"text":mon.ten,
+						"viewclass": "OneLineListItem",
+						"on_release":lambda x=mon.ten:self.slec_mon(x),
+					})
+		if self.menu.items!=[]:self.menu.open()
+	def slec_lop(self,lop):
+		self.lop.text=lop
+		self.menu.dismiss()
+		self.diemcacmon_chart()
+	def slec_mon(self,mon):
+		self.monhoc.text=mon
+		self.cotdiem.text="Tất cả cột"
+		self.menu.dismiss()
+		self.diemcacmon_chart()
+	def slec_cotdiem(self,cotdiem):
+		self.cotdiem.text=cotdiem
+		self.menu.dismiss()
+		self.diemcacmon_chart()
+	def open_menu_cotdiem(self,*args):
+		self.menu=MDDropdownMenu(
+				caller=args[0],
+				max_height=500,
+				width_mult=4,
+				position="bottom"
+			)
+		if self.cotdiem.text != "Tất cả cột":
+			self.menu.items.append({
+							"text":"Tất cả cột",
+							"viewclass": "OneLineListItem",
+							"on_release":lambda x="Tất cả cột":self.slec_cotdiem(x),
+						})
+		all_cot=[]
+		for mon in app.monhoc:
+			if mon.ten == self.monhoc.text or self.monhoc.text == "Tất cả môn":
+				if self.hocki.text=="Học kì I":
+					for cotdiem in mon.dhk1:
+						if cotdiem.ten not in all_cot:
+							self.menu.items.append({
+									"text":cotdiem.ten,
+									"viewclass": "OneLineListItem",
+									"on_release":lambda x=cotdiem.ten:self.slec_cotdiem(x),
+								})
+							all_cot.append(cotdiem.ten)
+				else:
+					for cotdiem in mon.dhk2:
+						if cotdiem.ten not in all_cot:
+							self.menu.items.append({
+									"text":cotdiem.ten,
+									"viewclass": "OneLineListItem",
+									"on_release":lambda x=cotdiem.ten:self.slec_cotdiem(x),
+								})
+							all_cot.append(cotdiem.ten)
+		if self.menu.items!=[]:self.menu.open()
 	def change_hocki(self,*args):
 		self.fig.clf()
 		self.fig, self.axs = pl.subplots(2)
 		self.fig.tight_layout(pad=5)
-		if args[0]=="Học kì I":
+		if args[0].text=="Học kì I":
+			self.bar_chart(2)
+			self.pie_chart(2)
+			args[0].text="Học kì II"
+		else:
+			self.bar_chart(1)
+			self.pie_chart(1)
+			args[0].text="Học kì I"
+		self.ketqua.remove_widget(self.chart)
+		self.chart=FigureCanvasKivyAgg(pl.gcf())
+		self.ketqua.add_widget(self.chart)
+	def update_chart(self):
+		if len(self.ketqua.children)==2:
+			self.ketqua.remove_widget(self.ketqua.children[0])
+		if hasattr(self,"fig"):
+			self.fig.clf()
+
+		self.fig, self.axs = pl.subplots(2)
+		self.fig.tight_layout(pad=5)
+		if self.hocki_ketqua.text=="Học kì I":
 			self.bar_chart(1)
 			self.pie_chart(1)
 		else:
 			self.bar_chart(2)
 			self.pie_chart(2)
-		self.ketqua.remove_widget(self.chart)
-		self.chart=FigureCanvasKivyAgg(pl.gcf())
-		self.ketqua.add_widget(self.chart)
-		self.menu.dismiss()
-	def update_chart(self):
-		self.ketqua.clear_widgets()
-
-		self.fig, self.axs = pl.subplots(2)
-		self.fig.tight_layout(pad=5)
-
-		self.bar_chart(1)
-		self.pie_chart(1)
 
 		self.chart=FigureCanvasKivyAgg(pl.gcf())
 		self.ketqua.add_widget(self.chart)
@@ -1105,11 +1312,11 @@ class Layout_Chart(Screen):
 		xeploai=[]
 		label=[]
 		annotate=[]
-		tonghs_gioi=app.tong_hocsinh_gioi(hocki)
-		tonghs_kha=app.tong_hocsinh_kha(hocki)
-		tonghs_trungbinh=app.tong_hocsinh_trungbinh(hocki)
-		tonghs_yeu=app.tong_hocsinh_yeu(hocki)
-		tonghs_kem=app.tong_hocsinh_kem(hocki)
+		tonghs_gioi=app.tong_hocsinh_gioi(hocki,self.lop_ketqua.text)
+		tonghs_kha=app.tong_hocsinh_kha(hocki,self.lop_ketqua.text)
+		tonghs_trungbinh=app.tong_hocsinh_trungbinh(hocki,self.lop_ketqua.text)
+		tonghs_yeu=app.tong_hocsinh_yeu(hocki,self.lop_ketqua.text)
+		tonghs_kem=app.tong_hocsinh_kem(hocki,self.lop_ketqua.text)
 		color=[]
 		if tonghs_gioi!=0:
 			xeploai.append(tonghs_gioi)
@@ -1137,21 +1344,19 @@ class Layout_Chart(Screen):
 			color.append("#FF7272")
 			annotate.append([tonghs_kem,(len(label)-1,tonghs_kem)])
 		self.axs[1].bar(label,xeploai,color=color)
-		help(self.axs[1].bar)
 		for i in annotate:
-			print(i[0],i[1])
 			self.axs[1].annotate(
 				i[0],
 				xy=i[1]
 				)
 	def pie_chart(self,hocki):
 		#Chuẩn bị dữ liệu
-		gioi=app.tong_hocsinh_gioi(hocki)
-		kha=app.tong_hocsinh_kha(hocki)
-		trungbinh=app.tong_hocsinh_trungbinh(hocki)
-		yeu=app.tong_hocsinh_yeu(hocki)
-		kem=app.tong_hocsinh_kem(hocki)
-		tongsohs=app.tongsohs()
+		gioi=app.tong_hocsinh_gioi(hocki,self.lop_ketqua.text)
+		kha=app.tong_hocsinh_kha(hocki,self.lop_ketqua.text)
+		trungbinh=app.tong_hocsinh_trungbinh(hocki,self.lop_ketqua.text)
+		yeu=app.tong_hocsinh_yeu(hocki,self.lop_ketqua.text)
+		kem=app.tong_hocsinh_kem(hocki,self.lop_ketqua.text)
+		tongsohs=gioi+kha+trungbinh+yeu+kem
 		data=[]
 		data1=[]
 		explode=[]
@@ -1197,11 +1402,11 @@ class Layout_Chart(Screen):
 				explode=explode,
 				autopct="%1.3f%%",
 				colors=color,
-				wedgeprops={"edgecolor":"white","linewidth":1.5},
+				wedgeprops={"edgecolor":"white","linewidth":2},
 			)
 	def resize(self,*args):
-		self.ketqua.width=Window.width
-		self.ketqua.height=Window.height-self.menubar.height
+		self.diemcacmon_layout.size=(self.MDTabs.size[0],self.MDTabs.size[1]-100)
+		self.ketqua.size=(self.MDTabs.size[0],self.MDTabs.size[1]-100)
 class Layout_Hocsinh(Screen):
 	def __init__(self,*args,**kwargn):
 		super(Layout_Hocsinh,self).__init__(**kwargn)
@@ -1270,7 +1475,7 @@ class Layout_Hocsinh(Screen):
 		if data.icon=="chart-bar":
 			app.tab.transition.direction="left"
 			app.tab.current="Chart"
-			app.Chart.update_chart()
+			app.Chart.slec_tab()
 		if data.icon=="account-plus":
 			self.add_widget(self.on_popup)
 			self.add_widget(self.layout_themhs)
@@ -3117,45 +3322,50 @@ class Myapp(MDApp):
 				for hs in lop.hocsinh:
 					cout+=1
 		return cout
-	def tong_hocsinh_gioi(self,hocki):
+	def tong_hocsinh_gioi(self,hocki,lopp):
 		cout=0
 		for tr in self.truong:
 			for lop in tr.lop:
-				for hs in lop.hocsinh:
-					if hs.xeploai(hocki) == "Giỏi":
-						cout+=1
+				if lop.ten == lopp or lopp == 'Toàn khối':
+					for hs in lop.hocsinh:
+						if hs.xeploai(hocki) == "Giỏi":
+							cout+=1
 		return cout
-	def tong_hocsinh_kha(self,hocki):
+	def tong_hocsinh_kha(self,hocki,lopp):
 		cout=0
 		for tr in self.truong:
 			for lop in tr.lop:
-				for hs in lop.hocsinh:
-					if hs.xeploai(hocki) == "Khá":
-						cout+=1
+				if lop.ten == lopp or lopp == 'Toàn khối':
+					for hs in lop.hocsinh:
+						if hs.xeploai(hocki) == "Khá":
+							cout+=1
 		return cout
-	def tong_hocsinh_trungbinh(self,hocki):
+	def tong_hocsinh_trungbinh(self,hocki,lopp):
 		cout=0
 		for tr in self.truong:
 			for lop in tr.lop:
-				for hs in lop.hocsinh:
-					if hs.xeploai(hocki) == "Trung bình":
-						cout+=1
+				if lop.ten == lopp or lopp == 'Toàn khối':
+					for hs in lop.hocsinh:
+						if hs.xeploai(hocki) == "Trung bình":
+							cout+=1
 		return cout
-	def tong_hocsinh_yeu(self,hocki):
+	def tong_hocsinh_yeu(self,hocki,lopp):
 		cout=0
 		for tr in self.truong:
 			for lop in tr.lop:
-				for hs in lop.hocsinh:
-					if hs.xeploai(hocki) == "Yếu":
-						cout+=1
+				if lop.ten == lopp or lopp == 'Toàn khối':
+					for hs in lop.hocsinh:
+						if hs.xeploai(hocki) == "Yếu":
+							cout+=1
 		return cout
-	def tong_hocsinh_kem(self,hocki):
+	def tong_hocsinh_kem(self,hocki,lopp):
 		cout=0
 		for tr in self.truong:
 			for lop in tr.lop:
-				for hs in lop.hocsinh:
-					if hs.xeploai(hocki) == "Kém":
-						cout+=1
+				if lop.ten == lopp or lopp == 'Toàn khối':
+					for hs in lop.hocsinh:
+						if hs.xeploai(hocki) == "Kém":
+							cout+=1
 		return cout
 class getfilepath_Excel(GridLayout):
 	def __init__(self,*args,**kwargn):
