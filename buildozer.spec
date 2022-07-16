@@ -1,7 +1,7 @@
 [app]
 
 # (str) Title of your application
-title = Quản lý sinh viên
+title = Quản lý học sinh
 
 # (str) Package name
 package.name = myapp

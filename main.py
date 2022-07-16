@@ -1117,12 +1117,12 @@ class Layout_Chart(Screen):
 									for cotdiem in mon.dhk1:
 										if cotdiem.ten == self.cotdiem.text or self.cotdiem.text == "Tất cả cột":
 											for diem in cotdiem.diem:
-												all_diem.append(diem)
+												all_diem.append(float(diem))
 								else:
 									for cotdiem in mon.dhk2:
 										if cotdiem.ten == self.cotdiem.text or self.cotdiem.text == "Tất cả cột":
 											for diem in cotdiem.diem:
-												all_diem.append(diem)
+												all_diem.append(float(diem))
 		data1=[]
 		data2=[]
 		all_diem.sort()
@@ -1131,8 +1131,8 @@ class Layout_Chart(Screen):
 		for i in all_diem:
 			if i not in data2:
 				data1.append(all_diem.count(i))
-				annotate.append([all_diem.count(i),(str(i),all_diem.count(i))])
-				data2.append(str(i))
+				annotate.append([all_diem.count(i),(i,all_diem.count(i))])
+				data2.append(i)
 				countt+=1
 		if len(self.diemcacmon_layout.children)==2:
 			self.diemcacmon_layout.remove_widget(self.diemcacmon_layout.children[0])
@@ -3430,7 +3430,7 @@ class setnamefile(GridLayout):
 		super(setnamefile,self).__init__(**kwargn)
 		self.app=args[0]
 		Window.bind(size=self.resize)
-		self.width=Window.width*70/100
+		self.width=700
 		self.rows=1
 		self.pos_hint={"center_x":.5,"center_y":.5}
 		self.size_hint=(None,None)
@@ -3472,7 +3472,7 @@ class setnamefile(GridLayout):
 			self.app.Filepath+=f"/{self.textfield.text}.LTP"
 		self.app.save()
 	def resize(self,*args):
-		self.width=Window.width*70/100
+		self.width=700
 class layout_timhocsinh_MHS(GridLayout):
 	def __init__(self,*args,**kwargn):
 		super(layout_timhocsinh_MHS,self).__init__(**kwargn)
