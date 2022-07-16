@@ -2152,7 +2152,7 @@ class Myapp(MDApp):
 		
 
 		self.Toolbar=MDToolbar(
-				title="Quản lý sinh viên",
+				title="Quản lý học sinh",
 				pos_hint={'top':1},
 				type="top",
 				elevation=10,
